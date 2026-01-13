@@ -1,0 +1,24 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	font-family: system-ui, sans-serif;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 100vh;
+	background: #1a1a2e;
+	color: #eee;
+}
+
+.container {
+	text-align: center;
+}
+
+h1 {
+	color: #00d9ff;
+	margin-bottom: 1rem;
+}

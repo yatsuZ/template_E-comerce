@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "ESNext",
+    "lib": ["ES6", "DOM"],
+    "moduleResolution": "bundler",
+    "outDir": "./dist/static/js",
+    "rootDir": "./srcs/static/js",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true
+  },
+  "include": ["srcs/static/js/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
