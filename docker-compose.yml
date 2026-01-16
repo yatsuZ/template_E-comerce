@@ -4,16 +4,16 @@ services:
     build:
       context: .
       dockerfile: Docker/node/Dockerfile
-    ports:
-      - "${PORT:-3000}:3000"
     env_file:
       - .env
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT=${PORT:-3000}
-    command: sh -c "npm install && npm run build && npm run dev"
+    command: sh -c "npm install && npm run redev"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-3000}/api/health"]
       interval: 10s
       timeout: 5s
       retries: 3

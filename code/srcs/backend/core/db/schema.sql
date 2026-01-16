@@ -1,0 +1,59 @@
+PRAGMA foreign_keys = ON;
+
+--  Users
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT UNIQUE,
+  password TEXT,
+  google_id TEXT UNIQUE,
+  provider TEXT DEFAULT 'local', -- local | google
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Products
+CREATE TABLE IF NOT EXISTS products (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  description TEXT,
+  price INTEGER NOT NULL, -- centimes
+  image TEXT,
+  stock INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Cart
+CREATE TABLE IF NOT EXISTS cart_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  product_id INTEGER NOT NULL,
+  price INTEGER NOT NULL, -- snapshot du prix
+  quantity INTEGER NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY(product_id) REFERENCES products(id)
+);
+
+-- Orders
+CREATE TABLE IF NOT EXISTS orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  total INTEGER NOT NULL,
+  status TEXT DEFAULT 'pending',
+  stripe_payment_id TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+-- Order items
+CREATE TABLE IF NOT EXISTS order_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  order_id INTEGER NOT NULL,
+  product_id INTEGER NOT NULL,
+  price INTEGER NOT NULL,
+  quantity INTEGER NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  FOREIGN KEY(product_id) REFERENCES products(id)
+);

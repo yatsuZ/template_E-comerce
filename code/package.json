@@ -8,7 +8,7 @@
     "build:client": "npx tsc -p tsconfig.client.json",
     "start": "node dist/srcs/backend/main.js",
     "dev": "npm run build && npm run build:client && npm run start",
-    "clean": "rm -rf ./dist",
+    "clean": "rm -rf ./dist ./srcs/backend/data",
     "redev": "npm run clean && npm run dev"
   },
   "keywords": [],
@@ -23,8 +23,10 @@
     "fastify": "^5.0.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/ejs": "^3.1.5",
     "@types/node": "^22.0.0",
+    "better-sqlite3": "^12.6.0",
     "pino-pretty": "^13.0.0",
     "typescript": "^5.0.0"
   }

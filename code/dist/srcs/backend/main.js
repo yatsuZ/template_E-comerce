@@ -3,25 +3,43 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const chalk_1 = __importDefault(require("chalk"));
+exports.PORT = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 const fastify_js_1 = require("./config/fastify.js");
 const logger_js_1 = require("./utils/logger.js");
+const message_js_1 = require("./utils/message.js");
+const config_js_1 = require("./core/config.js");
 dotenv_1.default.config();
-const PORT = parseInt(process.env.PORT || '3000', 10);
+exports.PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = '0.0.0.0';
 const start = async () => {
-    console.log(chalk_1.default.magenta('\n========================================'));
-    console.log(chalk_1.default.magenta('         SERVER STARTING...'));
-    console.log(chalk_1.default.magenta('========================================\n'));
+    (0, message_js_1.msg_SERV_START)();
     try {
         const fastify = await (0, fastify_js_1.buildFastify)();
-        await fastify.listen({ port: PORT, host: HOST });
-        console.log(chalk_1.default.green('\n========================================'));
-        console.log(chalk_1.default.green('         SERVER READY'));
-        console.log(chalk_1.default.green('========================================'));
-        console.log(chalk_1.default.cyan(`\n  Local:   http://localhost:${PORT}`));
-        console.log(chalk_1.default.cyan(`  API:     http://localhost:${PORT}/api/health\n`));
+        // Graceful shutdown
+        const shutdown = async (signal) => {
+            logger_js_1.Logger.warn(`Received ${signal}, shutting down...`);
+            try {
+                await fastify.close();
+                logger_js_1.Logger.success('Fastify server closed');
+            }
+            catch (err) {
+                logger_js_1.Logger.error('Error closing Fastify:', err);
+            }
+            try {
+                config_js_1.db.close();
+            }
+            catch (err) {
+                logger_js_1.Logger.error('Error closing database:', err);
+            }
+            process.exit(0);
+        };
+        process.on('SIGINT', shutdown);
+        process.on('SIGTERM', shutdown);
+        process.on('uncaughtException', shutdown);
+        process.on('unhandledRejection', shutdown);
+        await fastify.listen({ port: exports.PORT, host: HOST });
+        (0, message_js_1.msg_SERV_READY)();
         logger_js_1.Logger.success('Fastify server running');
     }
     catch (err) {

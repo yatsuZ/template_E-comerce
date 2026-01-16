@@ -19,28 +19,38 @@ YELLOW  = \033[1;33m
 RED     = \033[1;31m
 NC      = \033[0m
 
-PORT             = 3000
-PROJECT_NAME     = web_template
+PROJECT_NAME     = e_comerce_template
 CODE_DIR         = ./code
 NODE_MODULE_PATH = $(CODE_DIR)/node_modules
 DOCKER_COMPOSE   = docker compose
 COMPOSE_FILE     = ./docker-compose.yml
 DC               = $(DOCKER_COMPOSE) -f $(COMPOSE_FILE)
 CONTAINER_NAME   = app_container
+ENV_FILE = .env
+-include $(ENV_FILE)
+export
+
+PORT ?= 3000
 
 all: help
 
 # ==================== LOCAL ====================
 
-local: build_local exec
+local: check_env  build_local exec
 
-install:
+check_env:
+	@if [ ! -f "$(ENV_FILE)" ]; then \
+		echo -e "$(RED)Erreur : fichier .env manquant. Créé-le avant d'exécuter Makefile.$(NC)"; \
+		exit 1; \
+	fi
+
+install: check_env 
 	@npm install --prefix "$(CODE_DIR)"
 
 build_local: install
 	@npm --prefix "$(CODE_DIR)" run build
 
-clean:
+clean: check_env 
 	@npm --prefix "$(CODE_DIR)" run clean
 
 fclean: clean
@@ -49,19 +59,19 @@ fclean: clean
 exec: build_local
 	@npm --prefix "$(CODE_DIR)" start
 
-redev:
+redev: check_env 
 	@npm --prefix "$(CODE_DIR)" run redev
 
 re: fclean local
 
 # ==================== DOCKER ====================
 
-docker: build up
+docker: check_env  build up
 
-build:
+build: 
 	@$(DC) build --no-cache
 
-up:
+up: 
 	@$(DC) up -d --remove-orphans
 	@echo -e "$(GREEN)http://localhost:$(PORT)$(NC)"
 
@@ -87,7 +97,7 @@ go_in:
 
 # ==================== HELP ====================
 
-help:
+help: check_env 
 	@echo -e "Makefile - $(PROJECT_NAME)"
 	@echo ""
 	@echo -e "$(BLUE)Local:$(NC)"
