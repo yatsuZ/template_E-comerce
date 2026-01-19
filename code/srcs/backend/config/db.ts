@@ -15,7 +15,7 @@ export class DatabaseManager {
 
   constructor(dbPath?: string) {
     const baseDir = getDirname();
-    this.dbPath = dbPath || path.join(baseDir, `../../data/${BDD_FILE_NAME}.db`);// metre le nomde la db ici va env 
+    this.dbPath = dbPath || path.join(baseDir, `../../data/${BDD_FILE_NAME}.db`);
 
     const dataDir = path.dirname(this.dbPath);
     if (!fs.existsSync(dataDir)) {
@@ -96,3 +96,4 @@ export class DatabaseManager {
 }
 
 export const db = new DatabaseManager();
+

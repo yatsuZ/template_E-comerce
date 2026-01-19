@@ -4,9 +4,10 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT UNIQUE,
-  password TEXT,
+  password TEXT NOT NULL,
   google_id TEXT UNIQUE,
   provider TEXT DEFAULT 'local', -- local | google
+  is_admin INTEGER DEFAULT 0, -- 0 = user normal, 1 = admin
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );

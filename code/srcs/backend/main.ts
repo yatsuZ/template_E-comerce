@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import { buildFastify } from './config/fastify.js';
 import { Logger } from './utils/logger.js';
 import { msg_SERV_READY, msg_SERV_START } from './utils/message.js';
-import { db } from './core/config.js';
+import { shutdown } from './utils/shutdown.js';
 
 dotenv.config();
 
@@ -16,33 +16,15 @@ const start = async () => {
 		const fastify = await buildFastify();
 
 		// Graceful shutdown
-		const shutdown = async (signal: string) => {
-			Logger.warn(`Received ${signal}, shutting down...`);
+		process.on('SIGINT', () => shutdown(fastify, 'SIGINT'));
+		process.on('SIGTERM', () => shutdown(fastify, 'SIGTERM'));
 
-			try {
-				await fastify.close();
-				Logger.success('Fastify server closed');
-			} catch (err) {
-				Logger.error('Error closing Fastify:', err);
-			}
+		process.on('uncaughtException', (err) => shutdown(fastify, 'uncaughtException', err));
 
-			try {
-				db.close();
-			} catch (err) {
-				Logger.error('Error closing database:', err);
-			}
-
-			process.exit(0);
-		};
-
-		process.on('SIGINT', shutdown);
-		process.on('SIGTERM', shutdown);
-		process.on('uncaughtException', shutdown);
-		process.on('unhandledRejection', shutdown);
-
+		process.on('unhandledRejection', (reason) => shutdown(fastify, 'unhandledRejection', reason));
 
 		await fastify.listen({ port: PORT, host: HOST });
-		
+
 		msg_SERV_READY()
 
 		Logger.success('Fastify server running');
