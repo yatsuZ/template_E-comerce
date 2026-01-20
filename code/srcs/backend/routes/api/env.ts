@@ -1,6 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { Logger } from '../../utils/logger.js';
 
+const location = "routes/api/env.ts"
+
 export async function envRoutes(fastify: FastifyInstance) {
 	fastify.get('/env', async () => {
 		const envVars = {
@@ -10,7 +12,7 @@ export async function envRoutes(fastify: FastifyInstance) {
 			// Ajoute ici les variables que tu veux exposer
 		};
 
-		Logger.info('Variables d\'environnement:');
+		Logger.info(location, 'Variables d\'environnement:');
 		console.log(envVars);
 		return {
 			status: 'ok',

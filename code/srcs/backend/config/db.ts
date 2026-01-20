@@ -3,6 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import { Logger } from '../utils/logger.js';
 
+const location = "config/db.ts"
+
 export const BDD_FILE_NAME : string = process.env.FILE_NAME_DB || 'default_name_e-commerce';
 
 const getDirname = (): string => {
@@ -20,11 +22,11 @@ export class DatabaseManager {
     const dataDir = path.dirname(this.dbPath);
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
-      Logger.info('Created data directory:', dataDir);
+      Logger.info(location, 'Created data directory:', dataDir);
     }
 
     this.db = new Database(this.dbPath);
-    Logger.info('Connected to database:', this.dbPath);
+    Logger.info(location, 'Connected to database:', this.dbPath);
 
     this.initSchema();
     this.runMigrations();
@@ -36,9 +38,11 @@ export class DatabaseManager {
       const schemaPath = path.join(baseDir, 'schema.sql');
       const schema = fs.readFileSync(schemaPath, 'utf-8');
       this.db.exec(schema);
-      Logger.success('Schema initialized successfully');
+
+      Logger.success(location, 'schema.sql initialized successfully in ', this.dbPath);
     } catch (error) {
-      Logger.error('Failed to initialize schema:', error);
+
+      Logger.error(location, 'Failed to initialize schema:', error);
       throw error;
     }
   }
@@ -49,7 +53,7 @@ export class DatabaseManager {
       const migrationsDir = path.join(baseDir, 'migrations');
 
       if (!fs.existsSync(migrationsDir)) {
-        Logger.info('No migrations folder found (using schema.sql directly)');
+        Logger.info(location, 'No migrations folder found (using schema.sql directly)');
         return;
       }
 
@@ -58,7 +62,7 @@ export class DatabaseManager {
         .sort();
 
       if (migrationFiles.length === 0) {
-        Logger.info('No migration files found');
+        Logger.info(location, 'No migration files found');
         return;
       }
 
@@ -68,16 +72,16 @@ export class DatabaseManager {
 
         try {
           this.db.exec(migration);
-          Logger.info(`Migration applied: ${file}`);
+          Logger.info(location, `Migration applied: ${file}`);
         } catch (error: any) {
           if (error.message && error.message.includes('duplicate column'))
-            Logger.info(`Migration already applied: ${file}`);
+            Logger.info(location, `Migration already applied: ${file}`);
           else
             throw error;
         }
       });
     } catch (error) {
-      Logger.error('Failed to run migrations:', error);
+      Logger.error(location, 'Failed to run migrations:', error);
       throw error;
     }
   }
@@ -90,10 +94,7 @@ export class DatabaseManager {
     if (this.db)
     {
       this.db.close();
-      Logger.info('Database connection closed');
+      Logger.info(location, 'Database connection closed');
     }
   }
 }
-
-export const db = new DatabaseManager();
-

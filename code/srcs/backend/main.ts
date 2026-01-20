@@ -3,6 +3,10 @@ import { buildFastify } from './config/fastify.js';
 import { Logger } from './utils/logger.js';
 import { msg_SERV_READY, msg_SERV_START } from './utils/message.js';
 import { shutdown } from './utils/shutdown.js';
+import { DatabaseManager } from './config/db.js';
+import { UserRepository } from './core/repositories/user.repository.js';
+
+const location = "main.ts"
 
 dotenv.config();
 
@@ -13,25 +17,28 @@ const start = async () => {
 	msg_SERV_START();
 
 	try {
-		const fastify = await buildFastify();
+    const db = new DatabaseManager();
+    const userRepo = new UserRepository(db.getConnection());
 
-		// Graceful shutdown
-		process.on('SIGINT', () => shutdown(fastify, 'SIGINT'));
-		process.on('SIGTERM', () => shutdown(fastify, 'SIGTERM'));
+    const fastify = await buildFastify();
 
-		process.on('uncaughtException', (err) => shutdown(fastify, 'uncaughtException', err));
+		process.on('SIGINT', () => shutdown(fastify, db, 'SIGINT'));
+		process.on('SIGTERM', () => shutdown(fastify, db, 'SIGTERM'));
 
-		process.on('unhandledRejection', (reason) => shutdown(fastify, 'unhandledRejection', reason));
+		process.on('uncaughtException', (err) => shutdown(fastify, db, 'uncaughtException', err));
+
+		process.on('unhandledRejection', (reason) => shutdown(fastify, db, 'unhandledRejection', reason));
 
 		await fastify.listen({ port: PORT, host: HOST });
 
 		msg_SERV_READY()
 
-		Logger.success('Fastify server running');
+		Logger.success(location, 'Fastify server running');
 	} catch (err) {
-		Logger.error('Failed to start server:', err);
+		Logger.error(location, 'Failed to start server:', err);
 		process.exit(1);
 	}
 };
 
 start();
+ 

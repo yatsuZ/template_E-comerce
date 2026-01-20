@@ -1,15 +1,18 @@
 import Database from 'better-sqlite3';
-import { db as db_Export} from '../../config/db.js';
+// import { db as db_Export} from '../../config/db.js';
 import { I_User } from '../interfaces/user.interfaces.js';
+import { Logger } from '../../utils/logger.js';
+
+const location = "core/repositories/user.repository.ts"
 
 export class UserRepository {
   private db: Database.Database;
 
-  constructor(database?: Database.Database) {
-    this.db = database || db_Export.getConnection();
+  constructor(database: Database.Database) {
+    this.db = database;
   }
 
-  create(email: string, hashedPassword: string, googleId?: string) {
+  createUser(email: string, hashedPassword: string, googleId?: string) {
     const stmt = this.db.prepare(`
       INSERT INTO users (email, password, google_id, provider)
       VALUES (?, ?, ?, ?)
@@ -19,7 +22,6 @@ export class UserRepository {
     const log_by_google_or_local = googleId ? 'google' : 'local';
 
     const res = stmt.run(email, hashedPassword, have_googleId, log_by_google_or_local);
-
     return res.lastInsertRowid as number;
   }
 
@@ -31,16 +33,16 @@ export class UserRepository {
     const res = stmt.run(email, hashedPassword, googleId ?? null, googleId ? 'google' : 'local');
     return res.lastInsertRowid as number;
   }
+  
+  findOneById(id: number): I_User | undefined {
+    return this.db.prepare(`SELECT * FROM users WHERE id = ?`).get(id) as I_User | undefined;
+  }
 
   findOneByEmail(email: string): I_User | undefined {
     return this.db.prepare(`SELECT * FROM users WHERE email = ?`).get(email) as I_User | undefined;
   }
 
-  findOneById(id: number): I_User | undefined {
-    return this.db.prepare(`SELECT * FROM users WHERE id = ?`).get(id) as I_User | undefined;
-  }
-
-  update(id: number, data: Partial<{email: string; password: string}>) : boolean {
+  updateUser(id: number, data: Partial<{email: string; password: string}>) : boolean {
     const updates = [];
     const params = [];
 
@@ -69,5 +71,3 @@ export class UserRepository {
     return result.changes > 0;
   }
 }
-
-export const userRepo = new UserRepository();
