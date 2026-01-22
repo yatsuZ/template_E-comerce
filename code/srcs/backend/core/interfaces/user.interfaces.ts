@@ -4,7 +4,7 @@ export interface I_User {
   password: string;
   google_id: string | null;
   provider: 'local' | 'google';
-  admin: boolean;
+  is_admin: number;
   created_at: string;
   updated_at: string;
 }
