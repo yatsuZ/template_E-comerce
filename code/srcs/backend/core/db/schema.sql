@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS users (
 -- Products
 CREATE TABLE IF NOT EXISTS products (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  description TEXT,
-  price INTEGER NOT NULL, -- centimes
+  name TEXT NOT NULL UNIQUE,
+  description TEXT UNIQUE,
+  price INTEGER NOT NULL, -- Centime
   image TEXT,
   stock INTEGER DEFAULT 0,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
