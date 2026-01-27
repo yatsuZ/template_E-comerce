@@ -86,3 +86,14 @@ export const Logger = {
   // route(method: string, path: string) {
   // },
 };
+
+export function showLog() {
+	if (process.env.NODE_ENV === 'production') return false;
+	return {
+		level: 'info',
+		transport: {
+			target: 'pino-pretty',
+			options: { colorize: true }
+		}
+	};
+}

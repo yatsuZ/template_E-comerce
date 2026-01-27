@@ -40,10 +40,10 @@ export class UserService {
     const user = UserService._userRepo.findOneById(userIdToDel);
     if (!user) throw new Error("User not found");
 
-    if (currentUser.admin === false && currentUser.id !== userIdToDel)
+    if (currentUser.is_admin === 0 && currentUser.id !== userIdToDel)
       throw new Error("Not authorized to delete this user");
 
-    if (currentUser.admin === false)
+    if (currentUser.is_admin === 0)
     {
       if (user.provider === 'local' && currentUser.password) {
         const match = await bcrypt.compare(currentUser.password, user.password!);
