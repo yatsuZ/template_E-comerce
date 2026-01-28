@@ -41,4 +41,10 @@ const start = async () => {
 };
 
 start();
- 
+
+
+// 1. Gestion derreur 
+// 2. Faire une classe abstract de reposotrie
+// 3. test les repo
+// 4. faire les autre repos avec tester
+// 5.
