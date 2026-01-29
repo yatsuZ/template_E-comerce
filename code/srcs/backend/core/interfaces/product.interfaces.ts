@@ -1,3 +1,4 @@
+// Produit du site d'ecomerce
 export interface I_Product {
   id: number; // key
   name: string; // UNIQUE

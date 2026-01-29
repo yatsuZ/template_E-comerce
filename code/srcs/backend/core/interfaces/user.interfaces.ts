@@ -1,3 +1,4 @@
+// Utilisateur du site d'ecomerce
 export interface I_User {
   id: number;
   email: string;

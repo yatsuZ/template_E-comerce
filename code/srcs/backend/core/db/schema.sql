@@ -29,11 +29,13 @@ CREATE TABLE IF NOT EXISTS cart_items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   product_id INTEGER NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 1,
   price INTEGER NOT NULL, -- snapshot du prix
-  quantity INTEGER NOT NULL,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY(product_id) REFERENCES products(id)
+  FOREIGN KEY(product_id) REFERENCES products(id),
+  UNIQUE(user_id, product_id)
 );
 
 -- Orders
@@ -44,6 +46,7 @@ CREATE TABLE IF NOT EXISTS orders (
   status TEXT DEFAULT 'pending',
   stripe_payment_id TEXT,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
@@ -52,9 +55,10 @@ CREATE TABLE IF NOT EXISTS order_items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   order_id INTEGER NOT NULL,
   product_id INTEGER NOT NULL,
-  price INTEGER NOT NULL,
   quantity INTEGER NOT NULL,
+  price INTEGER NOT NULL,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE,
   FOREIGN KEY(product_id) REFERENCES products(id)
 );
