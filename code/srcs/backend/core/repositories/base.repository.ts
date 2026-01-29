@@ -26,8 +26,12 @@ export abstract class BaseRepository<T, TCreate extends object, TUpdate extends 
 
       const info = stmt.run(values);
 
-      const createdRow = { ...(data as any), id: info.lastInsertRowid } as T;
-      return success(createdRow);
+      const row = this.db.prepare(
+        `SELECT * FROM ${this.tableName} WHERE id = ?`
+      ).get(info.lastInsertRowid);
+
+      return success(row as T);
+
     } catch (err) {
       return failure('DATABASE', `Error creating record in ${this.tableName}`, err);
     }
@@ -76,7 +80,10 @@ export abstract class BaseRepository<T, TCreate extends object, TUpdate extends 
       const keys = Object.keys(data);
       if (keys.length === 0) return failure('INVALID_ARG', 'No fields to update');
 
-      const setClause = keys.map(key => `${key} = ?`).join(', ');
+      const setClause = [...keys, 'updated_at = CURRENT_TIMESTAMP']
+      .map(key => `${key} = ?`)
+      .join(', ');
+
       const values = Object.values(data);
 
       const stmt = this.db.prepare(

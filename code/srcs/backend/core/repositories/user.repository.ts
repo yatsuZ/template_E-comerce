@@ -7,13 +7,17 @@ import { Result } from '../../utils/Error/ErrorMangament.js';
 
 const location = "core/repositories/user.repository.ts"
 
-type UserCreate = Omit<I_User, 'id' | 'created_at' | 'updated_at'>;
+type UserCreate = Omit<I_User, 'id' | 'created_at' | 'updated_at'>;// dire que email pwd obligatoire mais le reste Partiel pas obliger
 type UserUpdate = Partial<Pick<I_User, 'email' | 'password'>>;
 
 export class UserRepository extends BaseRepository<I_User, UserCreate, UserUpdate> {
   constructor(db: Database.Database) {
     super(db, 'users');
   }
+
+  // Create User
+
+  // Create Admine
 
   // méthodes spécifiques si besoin
   findOneByEmail(email: string) : Result<I_User[]> {

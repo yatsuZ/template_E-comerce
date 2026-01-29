@@ -25,15 +25,18 @@ export class CartRepository extends BaseRepository<I_Cart, CartCreate, CartUpdat
   }
 
   findByProductId(userId: number) : Result<I_Cart[]> {
-      return this.findBy(colmun_user_id, userId);
+      return this.findBy(colmun_product_id, userId);
   }
 
-  findOneByUserAndProduct(userId: number, productId: number) : Result<I_Cart[]> {
+  findOneByUserAndProduct(userId: number, productId: number): Result<I_Cart | null> {
     try {
-      const rows = this.db.prepare(`SELECT * FROM ${this.tableName} WHERE ${String(colmun_user_id)} = ? AND ${String(colmun_product_id)} = ?`).all(userId, productId);
-      return success(rows as I_Cart[]);
+      const row = this.db
+        .prepare(`SELECT * FROM ${this.tableName} WHERE ${colmun_user_id} = ? AND ${colmun_product_id} = ?`)
+        .get(userId, productId);
+    
+      return success((row ?? null) as I_Cart | null);
     } catch (err) {
-      return failure('DATABASE', `Error fetching ${this.tableName} by ${String(colmun_user_id)} AND ${String(colmun_product_id)}`, err);
+      return failure('DATABASE', `Error fetching ${this.tableName} by user/product`, err);
     }
   }
 

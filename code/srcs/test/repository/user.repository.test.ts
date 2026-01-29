@@ -49,7 +49,7 @@ describe('UserRepository', () => {
     it('devrait créer un utilisateur avec les données minimales', () => {
       const email : string = 'testUser@gmail.com';
       const pwd : string = "123456";
-      const rowId : number = userRepo.createUser(email, pwd);
+      const rowId : number = userRepo.create(email, pwd);
 
       const user: I_User | undefined = db.getConnection()
         .prepare(`SELECT * FROM users WHERE id = ?`)
