@@ -39,7 +39,7 @@ export class DatabaseManager {
       const schema = fs.readFileSync(schemaPath, 'utf-8');
       this.db.exec(schema);
 
-      Logger.success(location, 'schema.sql initialized successfully in ', this.dbPath);
+      Logger.info(location, 'schema.sql initialized successfully in ', this.dbPath);
     } catch (error) {
 
       Logger.error(location, 'Failed to initialize schema:', error);

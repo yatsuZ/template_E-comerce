@@ -80,8 +80,7 @@ export abstract class BaseRepository<T, TCreate extends object, TUpdate extends 
       const keys = Object.keys(data);
       if (keys.length === 0) return failure('INVALID_ARG', 'No fields to update');
 
-      const setClause = [...keys, 'updated_at = CURRENT_TIMESTAMP']
-      .map(key => `${key} = ?`)
+      const setClause = [...keys.map(key => `${key} = ?`), 'updated_at = CURRENT_TIMESTAMP']
       .join(', ');
 
       const values = Object.values(data);

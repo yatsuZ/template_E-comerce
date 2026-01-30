@@ -1,9 +1,8 @@
-import {getENV, updateENV, Logger} from "./../../backend/utils/logger.js"
-import { UserRepository } from "./../../backend/core/repositories/user.repository.js"
-import {DatabaseManager} from "./../../backend/config/db.js"
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { I_User } from "../../backend/core/interfaces/user.interfaces.js";
-import { tr } from "zod/locales";
+import {DatabaseManager} from './../../backend/config/db.js';
+import { UserRepository } from '../../backend/core/repositories/user.repository.js';
+import { I_User } from '../../backend/core/interfaces/user.interfaces.js';
+import { Logger, updateENV } from '../../backend/utils/logger.js';
 
 updateENV("debug");
 
@@ -24,7 +23,6 @@ function expectUsersEqual(actual: I_User, expected: Partial<I_User>) {
   expect(actual.password).toBe(expected.password);
   expect(actual.google_id).toBe(expected.google_id);
   expect(actual.provider).toBe(expected.provider);
-  // Logger.debug("dans expectUsersEqual", actual, expected)
   expect(actual.is_admin).toBe(expected.is_admin);
 }
 
@@ -44,94 +42,144 @@ describe('UserRepository', () => {
   });
 
 
-// Test create
-  describe('createUser', () => {
-    it('devrait créer un utilisateur avec les données minimales', () => {
-      const email : string = 'testUser@gmail.com';
-      const pwd : string = "123456";
-      const rowId : number = userRepo.create(email, pwd);
+  // -------------------
+  // CREATE
+  // -------------------
 
-      const user: I_User | undefined = db.getConnection()
-        .prepare(`SELECT * FROM users WHERE id = ?`)
-        .get(rowId) as I_User | undefined;
+  it('create → crée un utilisateur normal', () => {
+    const res = userRepo.create({
+      email: 'test@gmail.com',
+      password: '123456',
+      google_id: null,
+      provider: 'local',
+      is_admin: 0,
+    });
 
-      // Logger.debug(location, `rowid[${rowId}] = `, user);
-      expect(user).toBeDefined();
+    if (!res.ok) {
+      Logger.error(location, "Erreur create:", res.error);
+    }
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
 
-      expectUsersEqual(user!, {
-        id: 1,
-        email,
-        password: pwd,
-        google_id: null,
-        provider: "local",
-        is_admin: 0,
+    const user = res.data;
+
+    expectUsersEqual(user, {
+      id: 1,
+      email: 'test@gmail.com',
+      password: '123456',
+      google_id: null,
+      provider: 'local',
+      is_admin: 0,
+    });
+
+    expectDateCloseToNow(user.created_at);
+    expectDateCloseToNow(user.updated_at);
+  });
+
+  // -------------------
+  // READ
+  // -------------------
+  it('findById → récupère un user existant', () => {
+    const created = userRepo.create({
+      email: 'read@gmail.com',
+      password: 'pwd',
+      google_id: null,
+      provider: 'local',
+      is_admin: 0,
       });
+      if (!created.ok) {
+        Logger.error(location, "Erreur create:", created.error);
+        throw new Error();
+      }
 
-      expectDateCloseToNow(user!.created_at);
-      expectDateCloseToNow(user!.updated_at);
-
-    });
-
-  });
-
-  describe('createAdmin', () => {
-    it('devrait créer un Administrateur avec les données minimales', () => {
-      const email : string = 'testAdmin@gmail.com';
-      const pwd : string = "123456";
-      const rowId : number = userRepo.createAdmin(email, pwd);
-
-      const user: I_User | undefined = db.getConnection()
-        .prepare(`SELECT * FROM users WHERE id = ?`)
-        .get(rowId) as I_User | undefined;
-
-      // Logger.debug(location, `rowid[${rowId}] = `, user);
-      expect(user).toBeDefined();
-
-      expectUsersEqual(user!, {
-        id: 1,
-        email,
-        password: pwd,
-        google_id: null,
-        provider: "local",
-        is_admin: 1,
+      const res = userRepo.findById(created.data.id);
+      if (!res.ok) {
+        Logger.error(location, "Erreur findById:", res.error);
+      }
+      expect(res.ok).toBe(true);
+      if (!res.ok) return;
+      
+      expect(res.data.email).toBe('read@gmail.com');
       });
-
-      expectDateCloseToNow(user!.created_at);
-      expectDateCloseToNow(user!.updated_at);
-
+      
+  it('findOneByEmail → récupère un user par email', () => {
+    userRepo.create({
+      email: 'mail@gmail.com',
+      password: 'pwd',
+      google_id: null,
+      provider: 'local',
+      is_admin: 0,
     });
 
-  });
-/*
-// Test Reade
-describe('findOneById', () => {
-  it('devrait récupérer un utilisateur existant à partir de son ID', () => {
-  });
-});
+    const res = userRepo.findOneByEmail('mail@gmail.com');
+    if (!res.ok) {
+      Logger.error(location, "Erreur findOneByEmail:", res.error);
+    }
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
 
-describe('findOneByEmail', () => {
-  it('devrait récupérer un utilisateur existant à partir de son Email', () => {
+    expect(res.data.length).toBe(1);
+    expect(res.data[0].email).toBe('mail@gmail.com');
   });
-});
 
-// Test Update
-describe('updateUser', () => {
-  it('devrait mettre à jour certaine information du User comme ', () => {
-    it('email', () => {
+  // -------------------
+  // UPDATE
+  // -------------------
+
+  it('update → met à jour email et updated_at', async () => {
+    const created = userRepo.create({
+      email: 'old@gmail.com',
+      password: 'pwd',
+      google_id: null,
+      provider: 'local',
+      is_admin: 0,
     });
-    it('Password', () => {
+    if (!created.ok) {
+      Logger.error(location, "Erreur create:", created.error);
+      throw new Error();
+    }
+
+    const before = created.data.updated_at;
+
+    const updated = userRepo.update(created.data.id, {
+      email: 'new@gmail.com'
     });
-  });
-  it('Et verifier Si la date update à etais pris en compte', () => {
-  });
-  
-});
 
-// Test Delete
-describe('delete', () => {
-  it('devrait Suprimer un User à partir de son ID.', () => {
-  });
-});
-*/
+    if (!updated.ok) {
+      Logger.error(location, "Erreur update:", updated.error);
+    }
+    expect(updated.ok).toBe(true);
+    if (!updated.ok) return;
 
+    expect(updated.data.email).toBe('new@gmail.com');
+    expect(new Date(updated.data.updated_at).getTime())
+      .toBeGreaterThanOrEqual(new Date(before).getTime());
+  });
+
+  // -------------------
+  // DELETE
+  // -------------------
+
+  it('delete → supprime un user', () => {
+    const created = userRepo.create({
+      email: 'delete@gmail.com',
+      password: 'pwd',
+      google_id: null,
+      provider: 'local',
+      is_admin: 0,
+    });
+    if (!created.ok) {
+      Logger.error(location, "Erreur create:", created.error);
+      throw new Error();
+    }
+
+    const del = userRepo.delete(created.data.id);
+    if (!del.ok) {
+      Logger.error(location, "Erreur delete:", del.error);
+    }
+    expect(del.ok).toBe(true);
+
+    const find = userRepo.findById(created.data.id);
+    expect(find.ok).toBe(false);
+  });
 });
