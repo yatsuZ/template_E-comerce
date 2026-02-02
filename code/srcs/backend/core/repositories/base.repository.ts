@@ -1,4 +1,4 @@
-import { failure, Result, success } from "../../utils/Error/ErrorMangament";
+import { failure, Result, success } from "../../utils/Error/ErrorManagement";
 import Database from 'better-sqlite3';
 
 export abstract class BaseRepository<T, TCreate extends object, TUpdate extends object, ID = number> {
@@ -33,6 +33,10 @@ export abstract class BaseRepository<T, TCreate extends object, TUpdate extends 
       return success(row as T);
 
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes('UNIQUE constraint failed')) {
+        return failure('CONFLICT', `Duplicate entry in ${this.tableName}`, err);
+      }
       return failure('DATABASE', `Error creating record in ${this.tableName}`, err);
     }
   }

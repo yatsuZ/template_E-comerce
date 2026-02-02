@@ -3,7 +3,7 @@ import Database from 'better-sqlite3';
 import { I_Order } from '../interfaces/order.interfaces.js';
 import { Logger } from '../../utils/logger.js';
 import { BaseRepository } from './base.repository.js';
-import { failure, Result, success } from '../../utils/Error/ErrorMangament.js';
+import { failure, Result, success } from '../../utils/Error/ErrorManagement.js';
 
 const location = "core/repositories/order.repository.ts"
 

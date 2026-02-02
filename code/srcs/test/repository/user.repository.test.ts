@@ -46,7 +46,7 @@ describe('UserRepository', () => {
   // CREATE
   // -------------------
 
-  it('create → crée un utilisateur normal', () => {
+  it('Crée un utilisateur normal → create()', () => {
     const res = userRepo.create({
       email: 'test@gmail.com',
       password: '123456',
@@ -79,7 +79,7 @@ describe('UserRepository', () => {
   // -------------------
   // READ
   // -------------------
-  it('findById → récupère un user existant', () => {
+  it('Récupère un user existant → findById()', () => {
     const created = userRepo.create({
       email: 'read@gmail.com',
       password: 'pwd',
@@ -102,7 +102,7 @@ describe('UserRepository', () => {
       expect(res.data.email).toBe('read@gmail.com');
       });
       
-  it('findOneByEmail → récupère un user par email', () => {
+  it('Récupère un user par email → findOneByEmail()', () => {
     userRepo.create({
       email: 'mail@gmail.com',
       password: 'pwd',
@@ -126,7 +126,7 @@ describe('UserRepository', () => {
   // UPDATE
   // -------------------
 
-  it('update → met à jour email et updated_at', async () => {
+  it('Met à jour email et updated_at → update()', async () => {
     const created = userRepo.create({
       email: 'old@gmail.com',
       password: 'pwd',
@@ -160,7 +160,7 @@ describe('UserRepository', () => {
   // DELETE
   // -------------------
 
-  it('delete → supprime un user', () => {
+  it('Supprime un user → delete()', () => {
     const created = userRepo.create({
       email: 'delete@gmail.com',
       password: 'pwd',
@@ -181,5 +181,69 @@ describe('UserRepository', () => {
 
     const find = userRepo.findById(created.data.id);
     expect(find.ok).toBe(false);
+  });
+
+  // -------------------
+  // ERROR CASES
+  // -------------------
+
+  it('Erreur si email déjà existant → create()', () => {
+    const first = userRepo.create({
+      email: 'duplicate@gmail.com',
+      password: 'pwd',
+      google_id: null,
+      provider: 'local',
+      is_admin: 0,
+    });
+    expect(first.ok).toBe(true);
+
+    const second = userRepo.create({
+      email: 'duplicate@gmail.com',
+      password: 'pwd2',
+      google_id: null,
+      provider: 'local',
+      is_admin: 0,
+    });
+
+    expect(second.ok).toBe(false);
+    if (!second.ok) {
+      expect(second.error.type).toBe('CONFLICT');
+    }
+  });
+
+  it('Erreur si ID inexistant → findById()', () => {
+    const res = userRepo.findById(9999);
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.error.type).toBe('NOT_FOUND');
+    }
+  });
+
+  it('Retourne liste vide si email inexistant → findOneByEmail()', () => {
+    const res = userRepo.findOneByEmail('nexistepas@gmail.com');
+
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.data.length).toBe(0);
+    }
+  });
+
+  it('Erreur si ID inexistant → update()', () => {
+    const res = userRepo.update(9999, { email: 'new@gmail.com' });
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.error.type).toBe('NOT_FOUND');
+    }
+  });
+
+  it('Erreur si ID inexistant → delete()', () => {
+    const res = userRepo.delete(9999);
+
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.error.type).toBe('NOT_FOUND');
+    }
   });
 });

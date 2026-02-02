@@ -3,7 +3,7 @@ import Database from 'better-sqlite3';
 import { I_Cart } from '../interfaces/cart.interfaces.js';
 import { Logger } from '../../utils/logger.js';
 import { BaseRepository } from './base.repository.js';
-import { failure, Result, success } from '../../utils/Error/ErrorMangament.js';
+import { failure, Result, success } from '../../utils/Error/ErrorManagement.js';
 
 const location = "core/repositories/cart.repository.ts"
 
