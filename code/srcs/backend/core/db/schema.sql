@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS orders (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   total INTEGER NOT NULL,
-  status TEXT CHECK(status IN ('pending','paid','cancelled','refunded')) DEFAULT 'pending',
+  status TEXT CHECK(status IN ('pending','paid','failed','cancelled','refunded','shipped','delivered')) DEFAULT 'pending',
   stripe_payment_id TEXT DEFAULT null,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
