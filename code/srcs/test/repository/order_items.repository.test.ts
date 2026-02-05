@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { DatabaseManager } from './../../backend/config/db.js';
-import { OrderItemssRepository } from '../../backend/core/repositories/order_items.repository.js';
+import { OrderItemsRepository } from '../../backend/core/repositories/order_items.repository.js';
 import { OrderRepository } from '../../backend/core/repositories/order.repository.js';
 import { UserRepository } from '../../backend/core/repositories/user.repository.js';
 import { ProductRepository } from '../../backend/core/repositories/product.repository.js';
@@ -30,7 +30,7 @@ function expectOrderItemsEqual(actual: I_OrderItems, expected: Partial<I_OrderIt
 
 describe('OrderItemsRepository', () => {
   let db: DatabaseManager;
-  let orderItemsRepo: OrderItemssRepository;
+  let orderItemsRepo: OrderItemsRepository;
   let orderRepo: OrderRepository;
   let userRepo: UserRepository;
   let productRepo: ProductRepository;
@@ -39,7 +39,7 @@ describe('OrderItemsRepository', () => {
 
   beforeEach(() => {
     db = new DatabaseManager(':memory:');
-    orderItemsRepo = new OrderItemssRepository(db.getConnection());
+    orderItemsRepo = new OrderItemsRepository(db.getConnection());
     orderRepo = new OrderRepository(db.getConnection());
     userRepo = new UserRepository(db.getConnection());
     productRepo = new ProductRepository(db.getConnection());

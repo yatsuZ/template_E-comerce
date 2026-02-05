@@ -11,7 +11,7 @@
     "clean": "rm -rf ./dist ./srcs/backend/data",
     "redev": "npm run clean && npm run dev",
     "test": "vitest run",
-    "retest": "npm run clean ; vitest",
+    "retest": "npm run clean ; vitest --reporter=verbose",
     "test:watch": "vitest"
   },
   "keywords": [],

@@ -11,8 +11,8 @@ const colmun_user_id = 'user_id';
 const colmun_product_id = 'product_id';
 
 
-type CartCreate = Omit<I_Cart, 'id' | 'created_at' | 'updated_at'>;
-type CartUpdate = Partial<Pick<I_Cart, 'quantity' | 'price'>>;
+export type CartCreate = Omit<I_Cart, 'id' | 'created_at' | 'updated_at'>;
+export type CartUpdate = Partial<Pick<I_Cart, 'quantity'>>;
 
 export class CartRepository extends BaseRepository<I_Cart, CartCreate, CartUpdate> {
 

@@ -24,7 +24,6 @@ function expectCartsEqual(actual: I_Cart, expected: Partial<I_Cart>) {
   expect(actual.user_id).toBe(expected.user_id);
   expect(actual.product_id).toBe(expected.product_id);
   expect(actual.quantity).toBe(expected.quantity);
-  expect(actual.price).toBe(expected.price);
 }
 
 describe('CartRepository', () => {
@@ -55,7 +54,7 @@ describe('CartRepository', () => {
     const productRes = productRepo.create({
       name: 'Test Product',
       description: 'Product for cart testing',
-      price: 1999,
+      price: 9900,
       image: 'https://example.com/test.jpg',
       stock: 100,
     });
@@ -76,7 +75,6 @@ describe('CartRepository', () => {
       user_id: userId,
       product_id: productId,
       quantity: 2,
-      price: 1999,
     });
 
     if (!res.ok) {
@@ -92,7 +90,6 @@ describe('CartRepository', () => {
       user_id: userId,
       product_id: productId,
       quantity: 2,
-      price: 1999,
     });
 
     expectDateCloseToNow(cart.created_at);
@@ -108,7 +105,6 @@ describe('CartRepository', () => {
       user_id: userId,
       product_id: productId,
       quantity: 3,
-      price: 1999,
     });
     if (!created.ok) {
       Logger.error(location, "Erreur create:", created.error);
@@ -130,7 +126,6 @@ describe('CartRepository', () => {
       user_id: userId,
       product_id: productId,
       quantity: 1,
-      price: 1999,
     });
 
     const res = cartRepo.findByUserId(userId);
@@ -149,7 +144,6 @@ describe('CartRepository', () => {
       user_id: userId,
       product_id: productId,
       quantity: 1,
-      price: 1999,
     });
 
     const res = cartRepo.findByProductId(productId);
@@ -168,7 +162,6 @@ describe('CartRepository', () => {
       user_id: userId,
       product_id: productId,
       quantity: 5,
-      price: 1999,
     });
 
     const res = cartRepo.findOneByUserAndProduct(userId, productId);
@@ -202,7 +195,6 @@ describe('CartRepository', () => {
       user_id: userId,
       product_id: productId,
       quantity: 2,
-      price: 1999,
     });
     if (!created.ok) {
       Logger.error(location, "Erreur create:", created.error);
@@ -213,7 +205,6 @@ describe('CartRepository', () => {
 
     const updated = cartRepo.update(created.data.id, {
       quantity: 10,
-      price: 1799,
     });
 
     if (!updated.ok) {
@@ -223,7 +214,6 @@ describe('CartRepository', () => {
     if (!updated.ok) return;
 
     expect(updated.data.quantity).toBe(10);
-    expect(updated.data.price).toBe(1799);
     expect(new Date(updated.data.updated_at).getTime())
       .toBeGreaterThanOrEqual(new Date(before).getTime());
   });
@@ -237,7 +227,6 @@ describe('CartRepository', () => {
       user_id: userId,
       product_id: productId,
       quantity: 1,
-      price: 1999,
     });
     if (!created.ok) {
       Logger.error(location, "Erreur create:", created.error);

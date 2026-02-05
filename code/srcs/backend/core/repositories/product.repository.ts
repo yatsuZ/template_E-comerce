@@ -7,8 +7,8 @@ import { Result } from '../../utils/Error/ErrorManagement.js';
 
 const location = "core/repositories/product.repository.ts"
 
-type ProductCreate = Omit<I_Product, 'id' | 'created_at' | 'updated_at'>;
-type ProductUpdate = Partial<Pick<I_Product, 'description' | 'price' | 'image' | 'stock'>>;
+export type ProductCreate = Omit<I_Product, 'id' | 'created_at' | 'updated_at'>;
+export type ProductUpdate = Partial<Pick<I_Product, 'description' | 'price' | 'image' | 'stock'>>;
 
 export class ProductRepository extends BaseRepository<I_Product, ProductCreate, ProductUpdate> {
 

@@ -3,17 +3,37 @@ import { UserRepository } from '../repositories/user.repository.js';
 import { I_User } from '../interfaces/user.interfaces.js';
 import { Result, success, failure } from '../../utils/Error/ErrorManagement.js';
 
-export class UserService {
-  private static _userRepo: UserRepository;
+const location = 'core/services/user.service.ts';
+const MIN_PASSWORD_LENGTH = 6;
 
-  constructor(userRepo: UserRepository) {
-    UserService._userRepo = userRepo;
+export class UserService {
+  constructor(private _userRepo: UserRepository) {}
+
+  // ========== VALIDATION (private) ==========
+
+  private isValidEmail(email: string): boolean {
+    // Regex simple mais efficace pour valider un email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   }
 
-  // Create
-  static async createUser(email: string, password: string, googleId?: string): Promise<Result<I_User>> {
+  private isValidPassword(password: string): boolean {
+    return password.length >= MIN_PASSWORD_LENGTH;
+  }
+
+  // ========== CREATE ==========
+
+  async createUser(email: string, password: string, googleId?: string): Promise<Result<I_User>> {
+    // Validation email
+    if (!this.isValidEmail(email))
+      return failure('INVALID_ARG', `${location} createUser: invalid email format`, email);
+
+    // Validation password
+    if (!this.isValidPassword(password))
+      return failure('INVALID_ARG', `${location} createUser: password must be at least ${MIN_PASSWORD_LENGTH} characters`, password.length);
+
     const hashed = await bcrypt.hash(password, 12);
-    return UserService._userRepo.create({
+    return this._userRepo.create({
       email,
       password: hashed,
       google_id: googleId ?? null,
@@ -22,9 +42,17 @@ export class UserService {
     });
   }
 
-  static async createAdmin(email: string, password: string, googleId?: string): Promise<Result<I_User>> {
+  async createAdmin(email: string, password: string, googleId?: string): Promise<Result<I_User>> {
+    // Validation email
+    if (!this.isValidEmail(email))
+      return failure('INVALID_ARG', `${location} createAdmin: invalid email format`, email);
+
+    // Validation password
+    if (!this.isValidPassword(password))
+      return failure('INVALID_ARG', `${location} createAdmin: password must be at least ${MIN_PASSWORD_LENGTH} characters`, password.length);
+
     const hashed = await bcrypt.hash(password, 12);
-    return UserService._userRepo.create({
+    return this._userRepo.create({
       email,
       password: hashed,
       google_id: googleId ?? null,
@@ -33,42 +61,70 @@ export class UserService {
     });
   }
 
-  // Read
-  static getUserById(userId: number): Result<I_User> {
-    return UserService._userRepo.findById(userId);
+  // ========== READ ==========
+
+  getUserById(userId: number): Result<I_User> {
+    return this._userRepo.findById(userId);
   }
 
-  static getUserByEmail(email: string): Result<I_User[]> {
-    return UserService._userRepo.findOneByEmail(email);
+  getUserByEmail(email: string): Result<I_User | null> {
+    const result = this._userRepo.findOneByEmail(email);
+    if (!result.ok) return result;
+
+    // findOneByEmail retourne un array, on veut le premier ou null
+    return success(result.data.length > 0 ? result.data[0] : null);
   }
 
-  // Update
-  static async updatePassword(userId: number, newPassword: string): Promise<Result<I_User>> {
+  getAll(): Result<I_User[]> {
+    return this._userRepo.findAll();
+  }
+
+  /**
+   * Vérifie si un email existe déjà en BDD
+   */
+  emailExists(email: string): Result<boolean> {
+    const result = this._userRepo.findOneByEmail(email);
+    if (!result.ok) return result;
+
+    return success(result.data.length > 0);
+  }
+
+  // ========== UPDATE ==========
+
+  async updatePassword(userId: number, newPassword: string): Promise<Result<I_User>> {
+    // Validation password
+    if (!this.isValidPassword(newPassword))
+      return failure('INVALID_ARG', `${location} updatePassword: password must be at least ${MIN_PASSWORD_LENGTH} characters`, newPassword.length);
+
     const hashed = await bcrypt.hash(newPassword, 12);
-    return UserService._userRepo.update(userId, { password: hashed });
+    return this._userRepo.update(userId, { password: hashed });
   }
 
-  static updateEmail(userId: number, newEmail: string): Result<I_User> {
-    return UserService._userRepo.update(userId, { email: newEmail });
+  updateEmail(userId: number, newEmail: string): Result<I_User> {
+    // Validation email
+    if (!this.isValidEmail(newEmail))
+      return failure('INVALID_ARG', `${location} updateEmail: invalid email format`, newEmail);
+
+    return this._userRepo.update(userId, { email: newEmail });
   }
 
-  // ==================== DELETE ====================
+  // ========== AUTH ==========
 
   /**
    * Vérifie si le mot de passe fourni correspond à celui de l'utilisateur
    */
-  static async verifyPassword(userId: number, plainPassword: string): Promise<Result<boolean>> {
-    const userResult = UserService._userRepo.findById(userId);
+  async verifyPassword(userId: number, plainPassword: string): Promise<Result<boolean>> {
+    const userResult = this._userRepo.findById(userId);
     if (!userResult.ok)
-      return failure('NOT_FOUND', 'User not found');
+      return failure('NOT_FOUND', `${location} verifyPassword: user not found`);
 
     const user = userResult.data;
     if (!user.password)
-      return failure('VALIDATION', 'User has no password (OAuth account)');
+      return failure('VALIDATION', `${location} verifyPassword: user has no password (OAuth account)`);
 
     const match = await bcrypt.compare(plainPassword, user.password);
     if (!match)
-      return failure('UNAUTHORIZED', 'Password incorrect');
+      return failure('UNAUTHORIZED', `${location} verifyPassword: password incorrect`);
 
     return success(true);
   }
@@ -78,12 +134,12 @@ export class UserService {
    * - Admin peut supprimer n'importe qui
    * - User normal peut seulement se supprimer lui-même
    */
-  static canDeleteUser(currentUser: I_User, targetUserId: number): Result<boolean> {
+  canDeleteUser(currentUser: I_User, targetUserId: number): Result<boolean> {
     if (currentUser.is_admin === 1)
       return success(true);
 
     if (currentUser.id !== targetUserId)
-      return failure('FORBIDDEN', 'Not authorized to delete this user');
+      return failure('FORBIDDEN', `${location} canDeleteUser: not authorized to delete this user`);
 
     return success(true);
   }
@@ -91,27 +147,29 @@ export class UserService {
   /**
    * Vérifie l'identité pour les comptes Google (google_id doit matcher)
    */
-  static verifyGoogleIdentity(currentUser: I_User, targetUser: I_User): Result<boolean> {
+  verifyGoogleIdentity(currentUser: I_User, targetUser: I_User): Result<boolean> {
     if (targetUser.provider !== 'google')
-      return failure('VALIDATION', 'User is not a Google account');
+      return failure('VALIDATION', `${location} verifyGoogleIdentity: user is not a Google account`);
 
     if (currentUser.google_id !== targetUser.google_id)
-      return failure('UNAUTHORIZED', 'Google identity mismatch');
+      return failure('UNAUTHORIZED', `${location} verifyGoogleIdentity: Google identity mismatch`);
 
     return success(true);
   }
 
+  // ========== DELETE ==========
+
   /**
    * Supprime un utilisateur (sans vérifications)
    */
-  static deleteUserById(userId: number): Result<boolean> {
-    const userResult = UserService._userRepo.findById(userId);
+  deleteUserById(userId: number): Result<boolean> {
+    const userResult = this._userRepo.findById(userId);
     if (!userResult.ok)
-      return failure('NOT_FOUND', 'User not found');
+      return failure('NOT_FOUND', `${location} deleteUserById: user not found`);
 
-    const deleteResult = UserService._userRepo.delete(userId);
+    const deleteResult = this._userRepo.delete(userId);
     if (!deleteResult.ok)
-      return failure('DATABASE', 'Failed to delete user');
+      return failure('DATABASE', `${location} deleteUserById: failed to delete user`);
 
     return success(true);
   }
@@ -122,20 +180,20 @@ export class UserService {
    * - userIdToDel: l'ID de l'utilisateur à supprimer
    * - password: mot de passe pour confirmer (requis si non-admin et compte local)
    */
-  static async deleteUserWithAuth(
+  async deleteUserWithAuth(
     currentUser: I_User,
     userIdToDel: number,
     password?: string
   ): Promise<Result<boolean>> {
     // 1. Vérifier que l'utilisateur cible existe
-    const targetUserResult = UserService._userRepo.findById(userIdToDel);
+    const targetUserResult = this._userRepo.findById(userIdToDel);
     if (!targetUserResult.ok)
-      return failure('NOT_FOUND', 'User not found');
+      return failure('NOT_FOUND', `${location} deleteUserWithAuth: user not found`);
 
     const targetUser = targetUserResult.data;
 
     // 2. Vérifier les permissions
-    const canDelete = UserService.canDeleteUser(currentUser, userIdToDel);
+    const canDelete = this.canDeleteUser(currentUser, userIdToDel);
     if (!canDelete.ok)
       return canDelete;
 
@@ -143,20 +201,19 @@ export class UserService {
     if (currentUser.is_admin === 0) {
       if (targetUser.provider === 'local') {
         if (!password)
-          return failure('VALIDATION', 'Password required to delete account');
-        const passwordCheck = await UserService.verifyPassword(userIdToDel, password);
+          return failure('VALIDATION', `${location} deleteUserWithAuth: password required to delete account`);
+        const passwordCheck = await this.verifyPassword(userIdToDel, password);
         if (!passwordCheck.ok)
           return passwordCheck;
       }
       else if (targetUser.provider === 'google') {
-        const googleCheck = UserService.verifyGoogleIdentity(currentUser, targetUser);
+        const googleCheck = this.verifyGoogleIdentity(currentUser, targetUser);
         if (!googleCheck.ok)
           return googleCheck;
       }
     }
 
     // 4. Supprimer l'utilisateur
-    return UserService.deleteUserById(userIdToDel);
+    return this.deleteUserById(userIdToDel);
   }
-
 }

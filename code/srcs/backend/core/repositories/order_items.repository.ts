@@ -13,7 +13,7 @@ const colmun_product_id = 'product_id';
 type OrderItemssCreate = Omit<I_OrderItems, 'id' | 'created_at' | 'updated_at'>;
 type OrderItemssUpdate = never;
 
-export class OrderItemssRepository extends BaseRepository<I_OrderItems, OrderItemssCreate, OrderItemssUpdate> {
+export class OrderItemsRepository extends BaseRepository<I_OrderItems, OrderItemssCreate, OrderItemssUpdate> {
 
   constructor(db: Database.Database) {
     super(db, 'order_items');
