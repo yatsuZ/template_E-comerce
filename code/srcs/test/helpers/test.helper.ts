@@ -226,6 +226,11 @@ export async function createApiTestContext(): Promise<ApiTestContext> {
   const fastify = Fastify({ logger: false });
   await fastify.register(fastifyCookie);
   fastify.decorate('authService', ctx.authService);
+  fastify.decorate('userService', ctx.userService);
+  fastify.decorate('productService', ctx.productService);
+  fastify.decorate('cartService', ctx.cartService);
+  fastify.decorate('orderService', ctx.orderService);
+  fastify.decorate('orderItemService', ctx.orderItemService);
   await setupRoutes(fastify);
   await fastify.ready();
 

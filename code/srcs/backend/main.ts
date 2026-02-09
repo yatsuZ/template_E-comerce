@@ -45,7 +45,14 @@ const start = async () => {
     const orderService = new OrderService(orderRepo, orderItemService, cartService, productService, userService);
     const authService = new AuthService(userService);
 
-    const fastify = await buildFastify({ authService });
+    const fastify = await buildFastify({
+      authService,
+      userService,
+      productService,
+      cartService,
+      orderService,
+      orderItemService,
+    });
 
 		process.on('SIGINT', () => shutdown(fastify, db, 'SIGINT'));
 		process.on('SIGTERM', () => shutdown(fastify, db, 'SIGTERM'));
