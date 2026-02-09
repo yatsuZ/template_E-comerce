@@ -1,24 +1,121 @@
 import { Result, success, failure } from '../../utils/Error/ErrorManagement.js';
-import { CartCreate, CartRepository } from '../repositories/cart.repository.js';
+import { CartRepository } from '../repositories/cart.repository.js';
+import { ProductService } from './products.service.js';
+import { UserService } from './user.service.js';
 import { I_Cart } from '../interfaces/cart.interfaces.js';
 
-export class CartService {
-  private _cartRepo: CartRepository;
+const location = 'core/services/cart.service.ts';
 
-  constructor(cartRepo: CartRepository) {
-    this._cartRepo = cartRepo;
+export class CartService {
+  constructor(
+    private _cartRepo: CartRepository,
+    private _productService: ProductService,
+    private _userService: UserService
+  ) {}
+
+  // ========== VALIDATION (private) ==========
+
+  private isValidQuantity(quantity: number): boolean {
+    return quantity > 0 && Number.isInteger(quantity);
   }
 
-  // Create
-  AddProductInCart(who_what_how_many: CartCreate): Result<I_Cart> {
-    const id_user = who_what_how_many.user_id; // Verifier que cette utilisateur existe
-    const id_product = who_what_how_many.product_id; // Verifier que ce produit existe
-    // Verifier que id user et id product nexiste pas deja car si les 2 existe alors on doit faire update aux lieux de create
-    const quantity = who_what_how_many.quantity;// Verifier que la quantité n'est pas supérieur aux stock du produit
-    // Si tout est bon on ajoute si non on retrun error 
+  // ========== CREATE ==========
 
-    // POur chaque verification de truc en faire une methode de services
-    // En vrai cart c'est galere je dois dabord commencer par product
-    return this._cartRepo.create({user_id: id_user, product_id: id_product, quantity: quantity});
+  /**
+   * Ajoute un produit au panier.
+   * Si le produit est déjà dans le panier → met à jour la quantité (additionne).
+   * Vérifie : user existe, product existe, stock suffisant.
+   */
+  addToCart(userId: number, productId: number, quantity: number): Result<I_Cart> {
+    if (!this.isValidQuantity(quantity))
+      return failure('INVALID_ARG', `${location} addToCart: quantity must be a positive integer`, quantity);
+
+    // Vérifier que l'utilisateur existe
+    const userResult = this._userService.getUserById(userId);
+    if (!userResult.ok)
+      return failure('NOT_FOUND', `${location} addToCart: user not found`, userId);
+
+    // Vérifier que le produit existe
+    const productResult = this._productService.getById(productId);
+    if (!productResult.ok)
+      return failure('NOT_FOUND', `${location} addToCart: product not found`, productId);
+
+    // Vérifier si le produit est déjà dans le panier
+    const existingResult = this._cartRepo.findOneByUserAndProduct(userId, productId);
+    if (!existingResult.ok) return existingResult;
+
+    if (existingResult.data) {
+      // Déjà dans le panier → additionner la quantité
+      const newQuantity = existingResult.data.quantity + quantity;
+
+      // Vérifier le stock pour la nouvelle quantité totale
+      const stockCheck = this._productService.hasEnoughStock(productId, newQuantity);
+      if (!stockCheck.ok) return stockCheck;
+      if (!stockCheck.data)
+        return failure('INVALID_ARG', `${location} addToCart: not enough stock. Requested: ${newQuantity}, available: ${productResult.data.stock}`, { requested: newQuantity, available: productResult.data.stock });
+
+      return this._cartRepo.update(existingResult.data.id, { quantity: newQuantity });
+    }
+
+    // Vérifier le stock
+    const stockCheck = this._productService.hasEnoughStock(productId, quantity);
+    if (!stockCheck.ok) return stockCheck;
+    if (!stockCheck.data)
+      return failure('INVALID_ARG', `${location} addToCart: not enough stock. Requested: ${quantity}, available: ${productResult.data.stock}`, { requested: quantity, available: productResult.data.stock });
+
+    return this._cartRepo.create({ user_id: userId, product_id: productId, quantity });
+  }
+
+  // ========== READ ==========
+
+  getCartByUserId(userId: number): Result<I_Cart[]> {
+    return this._cartRepo.findByUserId(userId);
+  }
+
+  getCartItem(cartId: number): Result<I_Cart> {
+    return this._cartRepo.findById(cartId);
+  }
+
+  // ========== UPDATE ==========
+
+  /**
+   * Met à jour la quantité d'un item du panier (remplace, n'additionne pas)
+   */
+  updateQuantity(cartId: number, newQuantity: number): Result<I_Cart> {
+    if (!this.isValidQuantity(newQuantity))
+      return failure('INVALID_ARG', `${location} updateQuantity: quantity must be a positive integer`, newQuantity);
+
+    // Vérifier que l'item existe
+    const cartResult = this._cartRepo.findById(cartId);
+    if (!cartResult.ok) return cartResult;
+
+    // Vérifier le stock
+    const stockCheck = this._productService.hasEnoughStock(cartResult.data.product_id, newQuantity);
+    if (!stockCheck.ok) return stockCheck;
+    if (!stockCheck.data)
+      return failure('INVALID_ARG', `${location} updateQuantity: not enough stock`, { requested: newQuantity });
+
+    return this._cartRepo.update(cartId, { quantity: newQuantity });
+  }
+
+  // ========== DELETE ==========
+
+  removeFromCart(cartId: number): Result<void> {
+    return this._cartRepo.delete(cartId);
+  }
+
+  /**
+   * Vide tout le panier d'un utilisateur
+   */
+  clearCart(userId: number): Result<void> {
+    const items = this._cartRepo.findByUserId(userId);
+    if (!items.ok) return items;
+
+    for (const item of items.data) {
+      const del = this._cartRepo.delete(item.id);
+      if (!del.ok) return del;
+    }
+
+    return success(undefined);
   }
 }

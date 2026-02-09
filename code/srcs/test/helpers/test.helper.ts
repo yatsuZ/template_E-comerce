@@ -7,6 +7,9 @@ import { OrderRepository } from '../../backend/core/repositories/order.repositor
 import { OrderItemsRepository } from '../../backend/core/repositories/order_items.repository.js';
 import { UserService } from '../../backend/core/services/user.service.js';
 import { ProductService } from '../../backend/core/services/products.service.js';
+import { CartService } from '../../backend/core/services/cart.service.js';
+import { OrderService } from '../../backend/core/services/order.service.js';
+import { OrderItemService } from '../../backend/core/services/order_items.service.js';
 
 // ========== ASSERTIONS ==========
 
@@ -33,6 +36,9 @@ export interface TestContext {
   // Services
   userService: UserService;
   productService: ProductService;
+  cartService: CartService;
+  orderService: OrderService;
+  orderItemService: OrderItemService;
 }
 
 /**
@@ -52,6 +58,9 @@ export function createTestContext(): TestContext {
   // Services
   const userService = new UserService(userRepo);
   const productService = new ProductService(productRepo);
+  const cartService = new CartService(cartRepo, productService, userService);
+  const orderItemService = new OrderItemService(orderItemsRepo);
+  const orderService = new OrderService(orderRepo, orderItemService, cartService, productService, userService);
 
   return {
     db,
@@ -62,6 +71,9 @@ export function createTestContext(): TestContext {
     orderItemsRepo,
     userService,
     productService,
+    cartService,
+    orderService,
+    orderItemService,
   };
 }
 
@@ -147,5 +159,47 @@ export function createTestProductRaw(repo: ProductRepository, name = 'Test Produ
     stock: 100,
   });
   if (!res.ok) throw new Error(`Failed to create test product: ${res.error.message}`);
+  return res.data;
+}
+
+/**
+ * Ajoute un produit au panier de test
+ */
+export function createTestCartItem(
+  service: CartService,
+  userId: number,
+  productId: number,
+  quantity = 1
+) {
+  const res = service.addToCart(userId, productId, quantity);
+  if (!res.ok) throw new Error(`Failed to create test cart item: ${res.error.message}`);
+  return res.data;
+}
+
+/**
+ * Crée une commande de test (simple, sans checkout)
+ */
+export function createTestOrder(
+  service: OrderService,
+  userId: number,
+  total = 10000
+) {
+  const res = service.createOrder(userId, total);
+  if (!res.ok) throw new Error(`Failed to create test order: ${res.error.message}`);
+  return res.data;
+}
+
+/**
+ * Crée un order item de test
+ */
+export function createTestOrderItem(
+  service: OrderItemService,
+  orderId: number,
+  productId: number,
+  quantity = 1,
+  price = 9900
+) {
+  const res = service.createItem({ order_id: orderId, product_id: productId, quantity, price });
+  if (!res.ok) throw new Error(`Failed to create test order item: ${res.error.message}`);
   return res.data;
 }
