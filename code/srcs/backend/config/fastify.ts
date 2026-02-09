@@ -1,15 +1,34 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import fastifyStatic from '@fastify/static';
 import fastifyView from '@fastify/view';
+import fastifyCookie from '@fastify/cookie';
 import ejs from 'ejs';
 import path from 'path';
 import { showLog } from '../utils/logger.js';
 import { setupRoutes } from '../routes/index.js';
+import { AuthService } from '../core/services/auth.service.js';
 
-export async function buildFastify(): Promise<FastifyInstance> {
+// Type augmentation pour accéder aux services via fastify.authService
+declare module 'fastify' {
+	interface FastifyInstance {
+		authService: AuthService;
+	}
+}
+
+export interface AppServices {
+	authService: AuthService;
+}
+
+export async function buildFastify(services: AppServices): Promise<FastifyInstance> {
 	const fastify = Fastify({
 		logger: showLog(),
 	});
+
+	// Plugins
+	await fastify.register(fastifyCookie);
+
+	// Décorer fastify avec les services
+	fastify.decorate('authService', services.authService);
 
 	// Templates EJS
 	await fastify.register(fastifyView, {

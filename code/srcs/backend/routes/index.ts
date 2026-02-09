@@ -1,11 +1,13 @@
 import { FastifyInstance } from 'fastify';
 import { healthRoutes } from './api/health.js';
 import { envRoutes } from './api/env.js';
+import { authRoutes } from './api/auth.js';
 
 export async function setupRoutes(fastify: FastifyInstance) {
 	// Routes API
 	await fastify.register(healthRoutes, { prefix: '/api' });
 	await fastify.register(envRoutes, { prefix: '/api' });
+	await fastify.register(authRoutes, { prefix: '/api/auth' });
 
 	// Route principale
 	fastify.get('/', async (request, reply) => {

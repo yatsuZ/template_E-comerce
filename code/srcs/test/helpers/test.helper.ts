@@ -1,4 +1,6 @@
 import { expect } from 'vitest';
+import Fastify, { FastifyInstance } from 'fastify';
+import fastifyCookie from '@fastify/cookie';
 import { DatabaseManager } from '../../backend/config/db.js';
 import { UserRepository } from '../../backend/core/repositories/user.repository.js';
 import { ProductRepository } from '../../backend/core/repositories/product.repository.js';
@@ -10,6 +12,8 @@ import { ProductService } from '../../backend/core/services/products.service.js'
 import { CartService } from '../../backend/core/services/cart.service.js';
 import { OrderService } from '../../backend/core/services/order.service.js';
 import { OrderItemService } from '../../backend/core/services/order_items.service.js';
+import { AuthService } from '../../backend/core/services/auth.service.js';
+import { setupRoutes } from '../../backend/routes/index.js';
 
 // ========== ASSERTIONS ==========
 
@@ -39,6 +43,7 @@ export interface TestContext {
   cartService: CartService;
   orderService: OrderService;
   orderItemService: OrderItemService;
+  authService: AuthService;
 }
 
 /**
@@ -61,6 +66,7 @@ export function createTestContext(): TestContext {
   const cartService = new CartService(cartRepo, productService, userService);
   const orderItemService = new OrderItemService(orderItemsRepo);
   const orderService = new OrderService(orderRepo, orderItemService, cartService, productService, userService);
+  const authService = new AuthService(userService);
 
   return {
     db,
@@ -74,6 +80,7 @@ export function createTestContext(): TestContext {
     cartService,
     orderService,
     orderItemService,
+    authService,
   };
 }
 
@@ -202,4 +209,33 @@ export function createTestOrderItem(
   const res = service.createItem({ order_id: orderId, product_id: productId, quantity, price });
   if (!res.ok) throw new Error(`Failed to create test order item: ${res.error.message}`);
   return res.data;
+}
+
+// ========== API TEST CONTEXT ==========
+
+export interface ApiTestContext extends TestContext {
+  fastify: FastifyInstance;
+}
+
+/**
+ * Crée un contexte de test API avec une instance Fastify + BDD en mémoire
+ */
+export async function createApiTestContext(): Promise<ApiTestContext> {
+  const ctx = createTestContext();
+
+  const fastify = Fastify({ logger: false });
+  await fastify.register(fastifyCookie);
+  fastify.decorate('authService', ctx.authService);
+  await setupRoutes(fastify);
+  await fastify.ready();
+
+  return { ...ctx, fastify };
+}
+
+/**
+ * Ferme Fastify + BDD
+ */
+export async function closeApiTestContext(ctx: ApiTestContext) {
+  await ctx.fastify.close();
+  ctx.db.close();
 }

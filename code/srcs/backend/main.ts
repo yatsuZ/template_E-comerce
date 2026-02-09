@@ -5,6 +5,16 @@ import { msg_SERV_READY, msg_SERV_START } from './utils/message.js';
 import { shutdown } from './utils/shutdown.js';
 import { DatabaseManager } from './config/db.js';
 import { UserRepository } from './core/repositories/user.repository.js';
+import { ProductRepository } from './core/repositories/product.repository.js';
+import { CartRepository } from './core/repositories/cart.repository.js';
+import { OrderRepository } from './core/repositories/order.repository.js';
+import { OrderItemsRepository } from './core/repositories/order_items.repository.js';
+import { UserService } from './core/services/user.service.js';
+import { ProductService } from './core/services/products.service.js';
+import { CartService } from './core/services/cart.service.js';
+import { OrderService } from './core/services/order.service.js';
+import { OrderItemService } from './core/services/order_items.service.js';
+import { AuthService } from './core/services/auth.service.js';
 
 const location = "main.ts"
 
@@ -18,9 +28,24 @@ const start = async () => {
 
 	try {
     const db = new DatabaseManager();
-    const userRepo = new UserRepository(db.getConnection());
+    const conn = db.getConnection();
 
-    const fastify = await buildFastify();
+    // Repositories
+    const userRepo = new UserRepository(conn);
+    const productRepo = new ProductRepository(conn);
+    const cartRepo = new CartRepository(conn);
+    const orderRepo = new OrderRepository(conn);
+    const orderItemsRepo = new OrderItemsRepository(conn);
+
+    // Services
+    const userService = new UserService(userRepo);
+    const productService = new ProductService(productRepo);
+    const cartService = new CartService(cartRepo, productService, userService);
+    const orderItemService = new OrderItemService(orderItemsRepo);
+    const orderService = new OrderService(orderRepo, orderItemService, cartService, productService, userService);
+    const authService = new AuthService(userService);
+
+    const fastify = await buildFastify({ authService });
 
 		process.on('SIGINT', () => shutdown(fastify, db, 'SIGINT'));
 		process.on('SIGTERM', () => shutdown(fastify, db, 'SIGTERM'));
@@ -41,10 +66,3 @@ const start = async () => {
 };
 
 start();
-
-
-// 1. Gestion derreur 
-// 2. Faire une classe abstract de reposotrie
-// 3. test les repo
-// 4. faire les autre repos avec tester
-// 5.
