@@ -32,5 +32,5 @@ export const logoutSuccessResponse = z.object({
 export const authErrorResponse = z.object({
   success: z.literal(false),
   error: z.string(),
-  details: z.record(z.array(z.string())).optional(),
+  details: z.record(z.string(), z.array(z.string())).optional(),
 });

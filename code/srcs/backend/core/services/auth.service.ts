@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { Result, success, failure } from '../../utils/Error/ErrorManagement.js';
 import { UserService } from './user.service.js';
 import {
@@ -9,6 +10,11 @@ import {
 } from '../../config/jwt.js';
 
 const location = 'core/services/auth.service.ts';
+
+/** Hash SHA-256 du refresh token avant stockage en BDD */
+function hashToken(token: string): string {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
 
 export interface AuthTokens {
   accessToken: string;
@@ -44,6 +50,9 @@ export class AuthService {
     const refreshResult = generateRefreshToken({ userId: user.id });
     if (!refreshResult.ok) return refreshResult;
 
+    // Sauvegarder le hash du refresh token en BDD
+    this._userService.saveRefreshToken(user.id, hashToken(refreshResult.data));
+
     return success({
       accessToken: accessResult.data,
       refreshToken: refreshResult.data,
@@ -78,6 +87,9 @@ export class AuthService {
     const refreshResult = generateRefreshToken({ userId: user.id });
     if (!refreshResult.ok) return refreshResult;
 
+    // Sauvegarder le hash du refresh token en BDD
+    this._userService.saveRefreshToken(user.id, hashToken(refreshResult.data));
+
     return success({
       accessToken: accessResult.data,
       refreshToken: refreshResult.data,
@@ -98,6 +110,10 @@ export class AuthService {
 
     const user = userResult.data;
 
+    // Vérifier que le hash du refresh token en BDD correspond
+    if (user.refresh_token !== hashToken(refreshToken))
+      return failure('UNAUTHORIZED', `${location} refresh: token revoked`);
+
     // Générer un nouvel access token
     const accessResult = generateAccessToken({
       userId: user.id,
@@ -107,5 +123,13 @@ export class AuthService {
     if (!accessResult.ok) return accessResult;
 
     return success({ accessToken: accessResult.data });
+  }
+
+  // ========== LOGOUT ==========
+
+  logout(userId: number): Result<boolean> {
+    const result = this._userService.clearRefreshToken(userId);
+    if (!result.ok) return result;
+    return success(true);
   }
 }

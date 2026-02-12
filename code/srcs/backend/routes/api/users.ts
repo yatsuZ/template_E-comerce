@@ -3,9 +3,9 @@ import { authMiddleware, adminMiddleware } from '../../middlewares/auth.middlewa
 import { updateEmailSchema, updatePasswordSchema, deleteAccountSchema } from '../../core/schema/user.schema.js';
 import { I_User } from '../../core/interfaces/user.interfaces.js';
 
-// Enlève le password de la réponse
+// Enlève les champs sensibles de la réponse
 function sanitizeUser(user: I_User) {
-	const { password, ...safe } = user;
+	const { password, refresh_token, ...safe } = user;
 	return safe;
 }
 

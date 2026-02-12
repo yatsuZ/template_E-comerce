@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { registerSchema, loginSchema } from '../../core/schema/auth.schema.js';
+import { authMiddleware } from '../../middlewares/auth.middleware.js';
 
 const REFRESH_COOKIE_NAME = 'refresh_token';
 const REFRESH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 jours en secondes
@@ -107,7 +108,10 @@ export async function authRoutes(fastify: FastifyInstance) {
 
 	// ========== LOGOUT ==========
 
-	fastify.post('/logout', async (request, reply) => {
+	fastify.post('/logout', { preHandler: [authMiddleware] }, async (request, reply) => {
+		// Supprimer le refresh token de la BDD
+		authService.logout(request.user.userId);
+
 		reply.clearCookie(REFRESH_COOKIE_NAME, { path: '/api/auth' });
 
 		return reply.code(200).send({

@@ -82,29 +82,39 @@ export class OrderService {
       items.push({ productId: product.id, quantity: cartItem.quantity, price: product.price });
     }
 
-    // Créer la commande
-    const orderResult = this._orderRepo.create({ user_id: userId, total });
-    if (!orderResult.ok) return orderResult;
+    // Transaction : tout passe ou rien ne passe
+    const db = this._orderRepo.getDb();
+    const transaction = db.transaction(() => {
+      // Créer la commande
+      const orderResult = this._orderRepo.create({ user_id: userId, total });
+      if (!orderResult.ok) return orderResult;
 
-    // Créer les order_items et décrémenter le stock
-    for (const item of items) {
-      const orderItemResult = this._orderItemService.createItem({
-        order_id: orderResult.data.id,
-        product_id: item.productId,
-        quantity: item.quantity,
-        price: item.price,
-      });
-      if (!orderItemResult.ok) return orderItemResult;
+      // Créer les order_items et décrémenter le stock
+      for (const item of items) {
+        const orderItemResult = this._orderItemService.createItem({
+          order_id: orderResult.data.id,
+          product_id: item.productId,
+          quantity: item.quantity,
+          price: item.price,
+        });
+        if (!orderItemResult.ok) return orderItemResult;
 
-      const decrementResult = this._productService.decrementStock(item.productId, item.quantity);
-      if (!decrementResult.ok) return decrementResult;
+        const decrementResult = this._productService.decrementStock(item.productId, item.quantity);
+        if (!decrementResult.ok) return decrementResult;
+      }
+
+      // Vider le panier
+      const clearResult = this._cartService.clearCart(userId);
+      if (!clearResult.ok) return clearResult;
+
+      return orderResult;
+    });
+
+    try {
+      return transaction();
+    } catch (err) {
+      return failure('DATABASE', `${location} checkout: transaction failed`, err);
     }
-
-    // Vider le panier
-    const clearResult = this._cartService.clearCart(userId);
-    if (!clearResult.ok) return clearResult;
-
-    return orderResult;
   }
 
   // ========== READ ==========
@@ -115,6 +125,10 @@ export class OrderService {
 
   getOrdersByUserId(userId: number): Result<I_Order[]> {
     return this._orderRepo.findByUserId(userId);
+  }
+
+  getAllOrders(): Result<I_Order[]> {
+    return this._orderRepo.findAll();
   }
 
   // ========== UPDATE ==========

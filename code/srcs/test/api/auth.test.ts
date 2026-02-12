@@ -213,9 +213,18 @@ describe('Auth API', () => {
 
   describe('POST /api/auth/logout', () => {
     it('Supprime le cookie et retourne 200', async () => {
+      // D'abord register pour obtenir un token
+      const registerRes = await ctx.fastify.inject({
+        method: 'POST',
+        url: '/api/auth/register',
+        payload: { email: 'logout@example.com', password: 'password123' },
+      });
+      const token = registerRes.json().accessToken;
+
       const res = await ctx.fastify.inject({
         method: 'POST',
         url: '/api/auth/logout',
+        headers: { authorization: `Bearer ${token}` },
       });
 
       expect(res.statusCode).toBe(200);

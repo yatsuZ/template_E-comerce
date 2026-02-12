@@ -2,6 +2,9 @@ import Fastify, { FastifyInstance } from 'fastify';
 import fastifyStatic from '@fastify/static';
 import fastifyView from '@fastify/view';
 import fastifyCookie from '@fastify/cookie';
+import fastifyCors from '@fastify/cors';
+import fastifyRateLimit from '@fastify/rate-limit';
+import fastifyHelmet from '@fastify/helmet';
 import ejs from 'ejs';
 import path from 'path';
 import { showLog } from '../utils/logger.js';
@@ -37,6 +40,17 @@ export interface AppServices {
 export async function buildFastify(services: AppServices): Promise<FastifyInstance> {
 	const fastify = Fastify({
 		logger: showLog(),
+	});
+
+	// Plugins securite
+	await fastify.register(fastifyHelmet);
+	await fastify.register(fastifyCors, {
+		origin: process.env.CORS_ORIGIN || 'http://localhost:3010',
+		credentials: true,
+	});
+	await fastify.register(fastifyRateLimit, {
+		max: 100,
+		timeWindow: '1 minute',
 	});
 
 	// Plugins

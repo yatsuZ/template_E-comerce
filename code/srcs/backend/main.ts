@@ -15,6 +15,7 @@ import { CartService } from './core/services/cart.service.js';
 import { OrderService } from './core/services/order.service.js';
 import { OrderItemService } from './core/services/order_items.service.js';
 import { AuthService } from './core/services/auth.service.js';
+import { seedAdmin } from './utils/seed.js';
 
 const location = "main.ts"
 
@@ -44,6 +45,8 @@ const start = async () => {
     const orderItemService = new OrderItemService(orderItemsRepo);
     const orderService = new OrderService(orderRepo, orderItemService, cartService, productService, userService);
     const authService = new AuthService(userService);
+
+    await seedAdmin(userService);
 
     const fastify = await buildFastify({
       authService,

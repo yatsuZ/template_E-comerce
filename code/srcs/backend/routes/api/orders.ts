@@ -90,12 +90,11 @@ export async function orderRoutes(fastify: FastifyInstance) {
 
 	// GET /api/orders/admin/all → Toutes les commandes (admin)
 	fastify.get('/admin/all', { preHandler: [adminMiddleware] }, async (request, reply) => {
-		// On récupère toutes les commandes en passant par le repo via le service
-		// Pour simplifier, on utilise findAll via une méthode custom ou on liste par user
-		// Ici on va utiliser le repo directement via une astuce: getOrdersByUserId ne marche pas pour "all"
-		// Ajoutons une logique simple : l'admin voit tout
-		// Note: On pourrait ajouter une méthode getAllOrders au service
-		return reply.code(501).send({ success: false, error: 'Not implemented yet - needs getAllOrders in service' });
+		const result = orderService.getAllOrders();
+		if (!result.ok) {
+			return reply.code(500).send({ success: false, error: result.error.message });
+		}
+		return reply.code(200).send({ success: true, data: result.data });
 	});
 
 	// PATCH /api/orders/admin/:id/status → Changer le status (admin)

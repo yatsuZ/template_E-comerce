@@ -157,6 +157,16 @@ export class UserService {
     return success(true);
   }
 
+  // ========== SESSION ==========
+
+  saveRefreshToken(userId: number, refreshToken: string): Result<I_User> {
+    return this._userRepo.saveRefreshToken(userId, refreshToken);
+  }
+
+  clearRefreshToken(userId: number): Result<I_User> {
+    return this._userRepo.clearRefreshToken(userId);
+  }
+
   // ========== DELETE ==========
 
   /**

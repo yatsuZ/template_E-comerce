@@ -10,6 +10,10 @@ export abstract class BaseRepository<T, TCreate extends object, TUpdate extends 
     this.tableName = tableName;
   }
 
+  getDb(): Database.Database {
+    return this.db;
+  }
+
   // -------------------
   // CREATE
   // -------------------

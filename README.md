@@ -94,6 +94,13 @@ Le site devra contenir :
 
 ---
 
+## 📖 Documentation technique
+
+- **[RECAP_SERVEUR.md](./RECAP_SERVEUR.md)** - Recap complet du serveur (interfaces, SQL, repositories, services, routes API, middlewares, config)
+- **[API_TESTING.md](./API_TESTING.md)** - Guide pour tester toutes les API avec curl (+ scenario complet)
+
+---
+
 ## 🚧 État du projet
 
 - [x] Template technique

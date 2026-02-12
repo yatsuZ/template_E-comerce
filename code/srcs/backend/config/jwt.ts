@@ -30,7 +30,7 @@ export function generateAccessToken(payload: AccessTokenPayload): Result<string>
     return failure('INTERNAL', `${location} generateAccessToken: JWT_TOKEN is not defined in .env`);
 
   try {
-    const token = jwt.sign(payload, ACCESS_SECRET, { expiresIn: ACCESS_EXPIRES_IN });
+    const token = jwt.sign(payload, ACCESS_SECRET, { algorithm: 'HS256', expiresIn: ACCESS_EXPIRES_IN });
     return success(token);
   } catch (err) {
     return failure('INTERNAL', `${location} generateAccessToken: failed to sign token`, err);
@@ -42,7 +42,7 @@ export function generateRefreshToken(payload: RefreshTokenPayload): Result<strin
     return failure('INTERNAL', `${location} generateRefreshToken: JWT_TOKEN_REFRESH is not defined in .env`);
 
   try {
-    const token = jwt.sign(payload, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES_IN });
+    const token = jwt.sign(payload, REFRESH_SECRET, { algorithm: 'HS256', expiresIn: REFRESH_EXPIRES_IN });
     return success(token);
   } catch (err) {
     return failure('INTERNAL', `${location} generateRefreshToken: failed to sign token`, err);
@@ -56,7 +56,7 @@ export function verifyAccessToken(token: string): Result<AccessTokenPayload> {
     return failure('INTERNAL', `${location} verifyAccessToken: JWT_TOKEN is not defined in .env`);
 
   try {
-    const decoded = jwt.verify(token, ACCESS_SECRET) as AccessTokenPayload;
+    const decoded = jwt.verify(token, ACCESS_SECRET, { algorithms: ['HS256'] }) as AccessTokenPayload;
     return success(decoded);
   } catch (err) {
     if (err instanceof jwt.TokenExpiredError)
@@ -70,7 +70,7 @@ export function verifyRefreshToken(token: string): Result<RefreshTokenPayload> {
     return failure('INTERNAL', `${location} verifyRefreshToken: JWT_TOKEN_REFRESH is not defined in .env`);
 
   try {
-    const decoded = jwt.verify(token, REFRESH_SECRET) as RefreshTokenPayload;
+    const decoded = jwt.verify(token, REFRESH_SECRET, { algorithms: ['HS256'] }) as RefreshTokenPayload;
     return success(decoded);
   } catch (err) {
     if (err instanceof jwt.TokenExpiredError)

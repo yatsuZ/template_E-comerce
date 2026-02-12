@@ -7,8 +7,8 @@ import { Result } from '../../utils/Error/ErrorManagement.js';
 
 const location = "core/repositories/user.repository.ts"
 
-type UserCreate = Omit<I_User, 'id' | 'created_at' | 'updated_at'>;
-type UserUpdate = Partial<Pick<I_User, 'email' | 'password'>>;
+type UserCreate = Omit<I_User, 'id' | 'refresh_token' | 'created_at' | 'updated_at'>;
+type UserUpdate = Partial<Pick<I_User, 'email' | 'password' | 'refresh_token'>>;
 
 export class UserRepository extends BaseRepository<I_User, UserCreate, UserUpdate> {
   constructor(db: Database.Database) {
@@ -17,5 +17,13 @@ export class UserRepository extends BaseRepository<I_User, UserCreate, UserUpdat
 
   findOneByEmail(email: string) : Result<I_User[]> {
     return this.findBy('email', email);
+  }
+
+  saveRefreshToken(userId: number, refreshToken: string): Result<I_User> {
+    return this.update(userId, { refresh_token: refreshToken });
+  }
+
+  clearRefreshToken(userId: number): Result<I_User> {
+    return this.update(userId, { refresh_token: null });
   }
 }
