@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { authMiddleware } from '../../middlewares/auth.middleware.js';
 import { addToCartSchema, updateCartSchema } from '../../core/schema/cart.schema.js';
+import { paginationSchema } from '../../core/schema/pagination.schema.js';
 
 export async function cartRoutes(fastify: FastifyInstance) {
 	const cartService = fastify.cartService;
@@ -10,13 +11,14 @@ export async function cartRoutes(fastify: FastifyInstance) {
 
 	// ========== READ ==========
 
-	// GET /api/cart → Mon panier
+	// GET /api/cart → Mon panier (paginé)
 	fastify.get('/', async (request, reply) => {
-		const result = cartService.getCartByUserId(request.user.userId);
+		const pagination = paginationSchema.parse(request.query);
+		const result = cartService.getCartByUserIdPaginated(request.user.userId, pagination);
 		if (!result.ok) {
 			return reply.code(500).send({ success: false, error: result.error.message });
 		}
-		return reply.code(200).send({ success: true, data: result.data });
+		return reply.code(200).send({ success: true, ...result.data });
 	});
 
 	// ========== CREATE ==========

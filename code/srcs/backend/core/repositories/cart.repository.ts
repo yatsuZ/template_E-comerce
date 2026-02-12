@@ -3,7 +3,7 @@ import Database from 'better-sqlite3';
 import { I_Cart } from '../interfaces/cart.interfaces.js';
 import { Logger } from '../../utils/logger.js';
 import { BaseRepository } from './base.repository.js';
-import { failure, Result, success } from '../../utils/Error/ErrorManagement.js';
+import { failure, Result, success, PaginationOptions, Paginated } from '../../utils/Error/ErrorManagement.js';
 
 const location = "core/repositories/cart.repository.ts"
 
@@ -26,6 +26,10 @@ export class CartRepository extends BaseRepository<I_Cart, CartCreate, CartUpdat
 
   findByProductId(userId: number) : Result<I_Cart[]> {
       return this.findBy(colmun_product_id, userId);
+  }
+
+  findByUserIdPaginated(userId: number, options: PaginationOptions): Result<Paginated<I_Cart>> {
+      return this.findByPaginated(colmun_user_id, userId, options);
   }
 
   findOneByUserAndProduct(userId: number, productId: number): Result<I_Cart | null> {

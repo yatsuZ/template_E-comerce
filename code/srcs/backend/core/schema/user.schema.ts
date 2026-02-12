@@ -3,22 +3,22 @@ import { z } from 'zod';
 // ========== SCHEMAS D'ENTREE ==========
 
 export const createUserSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  googleId: z.string().optional(),
+  email: z.string().max(255).email(),
+  password: z.string().min(6).max(128),
+  googleId: z.string().max(255).optional(),
 });
 
 export const updateEmailSchema = z.object({
-  email: z.string().email(),
+  email: z.string().max(255).email(),
 });
 
 export const updatePasswordSchema = z.object({
-  currentPassword: z.string().min(1),
-  newPassword: z.string().min(6),
+  currentPassword: z.string().min(1).max(128),
+  newPassword: z.string().min(6).max(128),
 });
 
 export const deleteAccountSchema = z.object({
-  password: z.string().min(1),
+  password: z.string().min(1).max(128),
 });
 
 // ========== SCHEMAS DE REPONSE ==========

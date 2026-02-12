@@ -1,4 +1,4 @@
-import { Result, success, failure } from '../../utils/Error/ErrorManagement.js';
+import { Result, success, failure, PaginationOptions, Paginated } from '../../utils/Error/ErrorManagement.js';
 import { CartRepository } from '../repositories/cart.repository.js';
 import { ProductService } from './products.service.js';
 import { UserService } from './user.service.js';
@@ -70,6 +70,10 @@ export class CartService {
 
   getCartByUserId(userId: number): Result<I_Cart[]> {
     return this._cartRepo.findByUserId(userId);
+  }
+
+  getCartByUserIdPaginated(userId: number, options: PaginationOptions): Result<Paginated<I_Cart>> {
+    return this._cartRepo.findByUserIdPaginated(userId, options);
   }
 
   getCartItem(cartId: number): Result<I_Cart> {

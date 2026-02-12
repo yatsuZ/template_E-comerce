@@ -1,4 +1,4 @@
-import { failure, Result, success } from "../../utils/Error/ErrorManagement";
+import { failure, Result, success, PaginationOptions, Paginated } from "../../utils/Error/ErrorManagement";
 import Database from 'better-sqlite3';
 
 export abstract class BaseRepository<T, TCreate extends object, TUpdate extends object, ID = number> {
@@ -76,6 +76,49 @@ export abstract class BaseRepository<T, TCreate extends object, TUpdate extends 
       return success(rows as T[]);
     } catch (err) {
       return failure('DATABASE', `Error fetching ${this.tableName}`, err);
+    }
+  }
+
+  findAllPaginated(options: PaginationOptions): Result<Paginated<T>> {
+    try {
+      const offset = (options.page - 1) * options.limit;
+      const rows = this.db.prepare(
+        `SELECT * FROM ${this.tableName} ORDER BY id DESC LIMIT ? OFFSET ?`
+      ).all(options.limit, offset) as T[];
+      const total = (this.db.prepare(
+        `SELECT COUNT(*) as count FROM ${this.tableName}`
+      ).get() as { count: number }).count;
+      return success({
+        items: rows,
+        total,
+        page: options.page,
+        limit: options.limit,
+        totalPages: Math.ceil(total / options.limit),
+      });
+    } catch (err) {
+      return failure('DATABASE', `Error fetching ${this.tableName}`, err);
+    }
+  }
+
+  findByPaginated<K extends keyof T>(column: K, value: T[K], options: PaginationOptions): Result<Paginated<T>> {
+    try {
+      const offset = (options.page - 1) * options.limit;
+      const col = String(column);
+      const rows = this.db.prepare(
+        `SELECT * FROM ${this.tableName} WHERE ${col} = ? ORDER BY id DESC LIMIT ? OFFSET ?`
+      ).all(value, options.limit, offset) as T[];
+      const total = (this.db.prepare(
+        `SELECT COUNT(*) as count FROM ${this.tableName} WHERE ${col} = ?`
+      ).get(value) as { count: number }).count;
+      return success({
+        items: rows,
+        total,
+        page: options.page,
+        limit: options.limit,
+        totalPages: Math.ceil(total / options.limit),
+      });
+    } catch (err) {
+      return failure('DATABASE', `Error fetching ${this.tableName} by ${col}`, err);
     }
   }
 

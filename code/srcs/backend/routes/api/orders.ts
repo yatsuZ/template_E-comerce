@@ -1,6 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { authMiddleware, adminMiddleware } from '../../middlewares/auth.middleware.js';
 import { updateOrderStatusSchema } from '../../core/schema/order.schema.js';
+import { paginationSchema } from '../../core/schema/pagination.schema.js';
+import { Logger } from '../../utils/logger.js';
 
 export async function orderRoutes(fastify: FastifyInstance) {
 	const orderService = fastify.orderService;
@@ -23,13 +25,14 @@ export async function orderRoutes(fastify: FastifyInstance) {
 
 	// ========== READ ==========
 
-	// GET /api/orders → Mes commandes
+	// GET /api/orders → Mes commandes (paginé)
 	fastify.get('/', async (request, reply) => {
-		const result = orderService.getOrdersByUserId(request.user.userId);
+		const pagination = paginationSchema.parse(request.query);
+		const result = orderService.getOrdersByUserIdPaginated(request.user.userId, pagination);
 		if (!result.ok) {
 			return reply.code(500).send({ success: false, error: result.error.message });
 		}
-		return reply.code(200).send({ success: true, data: result.data });
+		return reply.code(200).send({ success: true, ...result.data });
 	});
 
 	// GET /api/orders/:id → Détail d'une commande
@@ -88,13 +91,14 @@ export async function orderRoutes(fastify: FastifyInstance) {
 
 	// ========== ADMIN ==========
 
-	// GET /api/orders/admin/all → Toutes les commandes (admin)
+	// GET /api/orders/admin/all → Toutes les commandes (admin, paginé)
 	fastify.get('/admin/all', { preHandler: [adminMiddleware] }, async (request, reply) => {
-		const result = orderService.getAllOrders();
+		const pagination = paginationSchema.parse(request.query);
+		const result = orderService.getAllOrdersPaginated(pagination);
 		if (!result.ok) {
 			return reply.code(500).send({ success: false, error: result.error.message });
 		}
-		return reply.code(200).send({ success: true, data: result.data });
+		return reply.code(200).send({ success: true, ...result.data });
 	});
 
 	// PATCH /api/orders/admin/:id/status → Changer le status (admin)
@@ -119,6 +123,7 @@ export async function orderRoutes(fastify: FastifyInstance) {
 			const statusCode = result.error.type === 'NOT_FOUND' ? 404 : 400;
 			return reply.code(statusCode).send({ success: false, error: result.error.message });
 		}
+		Logger.audit('ADMIN_UPDATE_ORDER_STATUS', { adminId: request.user.userId, orderId, status: parsed.data.status });
 		return reply.code(200).send({ success: true, data: result.data });
 	});
 }

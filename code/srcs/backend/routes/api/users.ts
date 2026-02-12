@@ -1,6 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { authMiddleware, adminMiddleware } from '../../middlewares/auth.middleware.js';
 import { updateEmailSchema, updatePasswordSchema, deleteAccountSchema } from '../../core/schema/user.schema.js';
+import { paginationSchema } from '../../core/schema/pagination.schema.js';
+import { Logger } from '../../utils/logger.js';
 import { I_User } from '../../core/interfaces/user.interfaces.js';
 
 // Enlève les champs sensibles de la réponse
@@ -92,13 +94,21 @@ export async function userRoutes(fastify: FastifyInstance) {
 
 	// ========== ADMIN ==========
 
-	// GET /api/users → Liste tous les users (admin)
+	// GET /api/users → Liste tous les users (admin, paginé)
 	fastify.get('/', { preHandler: [authMiddleware, adminMiddleware] }, async (request, reply) => {
-		const result = userService.getAll();
+		const pagination = paginationSchema.parse(request.query);
+		const result = userService.getAllPaginated(pagination);
 		if (!result.ok) {
 			return reply.code(500).send({ success: false, error: result.error.message });
 		}
-		return reply.code(200).send({ success: true, data: result.data.map(sanitizeUser) });
+		return reply.code(200).send({
+			success: true,
+			items: result.data.items.map(sanitizeUser),
+			total: result.data.total,
+			page: result.data.page,
+			limit: result.data.limit,
+			totalPages: result.data.totalPages,
+		});
 	});
 
 	// GET /api/users/:id → Voir un user (admin)
@@ -128,6 +138,7 @@ export async function userRoutes(fastify: FastifyInstance) {
 		if (!result.ok) {
 			return reply.code(404).send({ success: false, error: 'User not found' });
 		}
+		Logger.audit('ADMIN_DELETE_USER', { adminId: request.user.userId, targetUserId: userId, ip: request.ip });
 		return reply.code(200).send({ success: true, message: 'User deleted' });
 	});
 }

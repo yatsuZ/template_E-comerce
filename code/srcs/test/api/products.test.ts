@@ -46,7 +46,7 @@ describe('Products API', () => {
   // ========== GET (public) ==========
 
   describe('GET /api/products', () => {
-    it('Retourne la liste des produits (public)', async () => {
+    it('Retourne la liste des produits (public, paginé)', async () => {
       createTestProduct(ctx.productService, 'P1');
       createTestProduct(ctx.productService, 'P2');
 
@@ -55,14 +55,16 @@ describe('Products API', () => {
       expect(res.statusCode).toBe(200);
       const body = res.json();
       expect(body.success).toBe(true);
-      expect(body.data.length).toBe(2);
+      expect(body.items.length).toBe(2);
+      expect(body.total).toBe(2);
+      expect(body.page).toBe(1);
     });
 
     it('Retourne liste vide si aucun produit', async () => {
       const res = await ctx.fastify.inject({ method: 'GET', url: '/api/products' });
 
       expect(res.statusCode).toBe(200);
-      expect(res.json().data.length).toBe(0);
+      expect(res.json().items.length).toBe(0);
     });
   });
 

@@ -83,8 +83,17 @@ export const Logger = {
     if (canLog('error')) console.error(...format('error', location, args));
   },
 
-  // route(method: string, path: string) {
-  // },
+  /** Audit log — affiché sauf en test, pour tracer les actions sensibles */
+  audit(action: string, details: Record<string, unknown>) {
+    if (process.env.VITEST) return;
+    const timestamp = new Date().toISOString();
+    console.log(
+      chalk.magenta('[AUDIT]'),
+      chalk.gray(timestamp),
+      chalk.white.bold(action),
+      JSON.stringify(details),
+    );
+  },
 };
 
 export function showLog() {

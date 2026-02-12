@@ -3,7 +3,7 @@ import Database from 'better-sqlite3';
 import { I_Order } from '../interfaces/order.interfaces.js';
 import { Logger } from '../../utils/logger.js';
 import { BaseRepository } from './base.repository.js';
-import { failure, Result, success } from '../../utils/Error/ErrorManagement.js';
+import { failure, Result, success, PaginationOptions, Paginated } from '../../utils/Error/ErrorManagement.js';
 
 const location = "core/repositories/order.repository.ts"
 
@@ -22,5 +22,9 @@ export class OrderRepository extends BaseRepository<I_Order, OrderCreate, OrderU
 
   findByUserId(userId: number) : Result<I_Order[]> {
       return this.findBy(colmun_user_id, userId);
+  }
+
+  findByUserIdPaginated(userId: number, options: PaginationOptions): Result<Paginated<I_Order>> {
+      return this.findByPaginated(colmun_user_id, userId, options);
   }
 }

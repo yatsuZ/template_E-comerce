@@ -90,7 +90,7 @@ describe('Orders API', () => {
         url: '/api/cart',
         headers: { authorization: `Bearer ${token}` },
       });
-      expect(cartRes.json().data.length).toBe(0);
+      expect(cartRes.json().items.length).toBe(0);
     });
 
     it('Décrémente le stock', async () => {
@@ -145,7 +145,7 @@ describe('Orders API', () => {
       });
 
       expect(res.statusCode).toBe(200);
-      expect(res.json().data.length).toBe(1);
+      expect(res.json().items.length).toBe(1);
     });
 
     it('Retourne liste vide si aucune commande', async () => {
@@ -154,7 +154,7 @@ describe('Orders API', () => {
         url: '/api/orders',
         headers: { authorization: `Bearer ${token}` },
       });
-      expect(res.json().data.length).toBe(0);
+      expect(res.json().items.length).toBe(0);
     });
   });
 

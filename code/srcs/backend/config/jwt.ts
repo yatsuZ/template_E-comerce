@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { failure, Result, success } from '../utils/Error/ErrorManagement.js';
 
 const location = 'config/jwt.ts';
@@ -42,7 +43,8 @@ export function generateRefreshToken(payload: RefreshTokenPayload): Result<strin
     return failure('INTERNAL', `${location} generateRefreshToken: JWT_TOKEN_REFRESH is not defined in .env`);
 
   try {
-    const token = jwt.sign(payload, REFRESH_SECRET, { algorithm: 'HS256', expiresIn: REFRESH_EXPIRES_IN });
+    const jti = crypto.randomUUID();
+    const token = jwt.sign({ ...payload, jti }, REFRESH_SECRET, { algorithm: 'HS256', expiresIn: REFRESH_EXPIRES_IN });
     return success(token);
   } catch (err) {
     return failure('INTERNAL', `${location} generateRefreshToken: failed to sign token`, err);

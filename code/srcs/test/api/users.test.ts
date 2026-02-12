@@ -162,8 +162,9 @@ describe('Users API', () => {
 
       expect(res.statusCode).toBe(200);
       const body = res.json();
-      expect(body.data.length).toBe(3); // admin + 2 users
-      expect(body.data[0].password).toBeUndefined();
+      expect(body.items.length).toBe(3); // admin + 2 users
+      expect(body.items[0].password).toBeUndefined();
+      expect(body.total).toBe(3);
     });
 
     it('403 si non-admin', async () => {

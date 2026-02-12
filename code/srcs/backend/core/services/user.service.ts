@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories/user.repository.js';
 import { I_User } from '../interfaces/user.interfaces.js';
-import { Result, success, failure } from '../../utils/Error/ErrorManagement.js';
+import { Result, success, failure, PaginationOptions, Paginated } from '../../utils/Error/ErrorManagement.js';
 
 const location = 'core/services/user.service.ts';
 const MIN_PASSWORD_LENGTH = 6;
@@ -77,6 +77,10 @@ export class UserService {
 
   getAll(): Result<I_User[]> {
     return this._userRepo.findAll();
+  }
+
+  getAllPaginated(options: PaginationOptions): Result<Paginated<I_User>> {
+    return this._userRepo.findAllPaginated(options);
   }
 
   /**

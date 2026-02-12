@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { registerSchema, loginSchema } from '../../core/schema/auth.schema.js';
 import { authMiddleware } from '../../middlewares/auth.middleware.js';
+import { Logger } from '../../utils/logger.js';
 
 const REFRESH_COOKIE_NAME = 'refresh_token';
 const REFRESH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 jours en secondes
@@ -34,12 +35,22 @@ export async function authRoutes(fastify: FastifyInstance) {
 		const result = await authService.register(email, password);
 
 		if (!result.ok) {
-			const statusCode = result.error.type === 'CONFLICT' ? 409 : 400;
-			return reply.code(statusCode).send({
+			if (result.error.type === 'CONFLICT') {
+				// Anti-énumération : même réponse que si le compte avait été créé
+				// L'attaquant ne peut pas savoir si l'email existe
+				Logger.audit('REGISTER_DUPLICATE', { email, ip: request.ip });
+				return reply.code(201).send({
+					success: true,
+					message: 'If this email is not already registered, a new account has been created. Check your email.',
+				});
+			}
+			return reply.code(400).send({
 				success: false,
 				error: result.error.message,
 			});
 		}
+
+		Logger.audit('REGISTER', { email, ip: request.ip });
 
 		reply.setCookie(REFRESH_COOKIE_NAME, result.data.refreshToken, getRefreshCookieOptions());
 
@@ -51,7 +62,14 @@ export async function authRoutes(fastify: FastifyInstance) {
 
 	// ========== LOGIN ==========
 
-	fastify.post('/login', async (request, reply) => {
+	fastify.post('/login', {
+		config: {
+			rateLimit: {
+				max: 5,
+				timeWindow: '1 minute',
+			},
+		},
+	}, async (request, reply) => {
 		const parsed = loginSchema.safeParse(request.body);
 		if (!parsed.success) {
 			return reply.code(400).send({
@@ -65,11 +83,14 @@ export async function authRoutes(fastify: FastifyInstance) {
 		const result = await authService.login(email, password);
 
 		if (!result.ok) {
+			Logger.audit('LOGIN_FAILED', { email, ip: request.ip });
 			return reply.code(401).send({
 				success: false,
 				error: 'Invalid email or password',
 			});
 		}
+
+		Logger.audit('LOGIN', { email, ip: request.ip });
 
 		reply.setCookie(REFRESH_COOKIE_NAME, result.data.refreshToken, getRefreshCookieOptions());
 
@@ -100,6 +121,9 @@ export async function authRoutes(fastify: FastifyInstance) {
 			});
 		}
 
+		// Rotation : set le nouveau refresh token dans le cookie
+		reply.setCookie(REFRESH_COOKIE_NAME, result.data.refreshToken, getRefreshCookieOptions());
+
 		return reply.code(200).send({
 			success: true,
 			accessToken: result.data.accessToken,
@@ -109,6 +133,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 	// ========== LOGOUT ==========
 
 	fastify.post('/logout', { preHandler: [authMiddleware] }, async (request, reply) => {
+		Logger.audit('LOGOUT', { userId: request.user.userId, ip: request.ip });
 		// Supprimer le refresh token de la BDD
 		authService.logout(request.user.userId);
 

@@ -1,4 +1,4 @@
-import { Result, success, failure } from '../../utils/Error/ErrorManagement.js';
+import { Result, success, failure, PaginationOptions, Paginated } from '../../utils/Error/ErrorManagement.js';
 import { I_Product } from '../interfaces/product.interfaces.js';
 import { ProductCreate, ProductUpdate, ProductRepository } from '../repositories/product.repository.js';
 
@@ -65,6 +65,10 @@ export class ProductService {
 
   getAll(): Result<I_Product[]> {
     return this._productRepo.findAll();
+  }
+
+  getAllPaginated(options: PaginationOptions): Result<Paginated<I_Product>> {
+    return this._productRepo.findAllPaginated(options);
   }
 
   // ========== UPDATE ==========

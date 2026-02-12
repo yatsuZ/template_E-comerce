@@ -48,7 +48,7 @@ describe('Cart API', () => {
       });
 
       expect(res.statusCode).toBe(200);
-      expect(res.json().data.length).toBe(0);
+      expect(res.json().items.length).toBe(0);
     });
 
     it('401 sans token', async () => {
@@ -246,7 +246,7 @@ describe('Cart API', () => {
         url: '/api/cart',
         headers: { authorization: `Bearer ${token}` },
       });
-      expect(getRes.json().data.length).toBe(0);
+      expect(getRes.json().items.length).toBe(0);
     });
   });
 });

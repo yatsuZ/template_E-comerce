@@ -1,4 +1,4 @@
-import { Result, success, failure } from '../../utils/Error/ErrorManagement.js';
+import { Result, success, failure, PaginationOptions, Paginated } from '../../utils/Error/ErrorManagement.js';
 import { OrderRepository } from '../repositories/order.repository.js';
 import { OrderItemService } from './order_items.service.js';
 import { CartService } from './cart.service.js';
@@ -127,8 +127,16 @@ export class OrderService {
     return this._orderRepo.findByUserId(userId);
   }
 
+  getOrdersByUserIdPaginated(userId: number, options: PaginationOptions): Result<Paginated<I_Order>> {
+    return this._orderRepo.findByUserIdPaginated(userId, options);
+  }
+
   getAllOrders(): Result<I_Order[]> {
     return this._orderRepo.findAll();
+  }
+
+  getAllOrdersPaginated(options: PaginationOptions): Result<Paginated<I_Order>> {
+    return this._orderRepo.findAllPaginated(options);
   }
 
   // ========== UPDATE ==========

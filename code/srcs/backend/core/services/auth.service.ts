@@ -96,9 +96,9 @@ export class AuthService {
     });
   }
 
-  // ========== REFRESH ==========
+  // ========== REFRESH (avec rotation) ==========
 
-  refresh(refreshToken: string): Result<{ accessToken: string }> {
+  refresh(refreshToken: string): Result<AuthTokens> {
     // Vérifier le refresh token
     const decoded = verifyRefreshToken(refreshToken);
     if (!decoded.ok) return decoded;
@@ -122,7 +122,16 @@ export class AuthService {
     });
     if (!accessResult.ok) return accessResult;
 
-    return success({ accessToken: accessResult.data });
+    // Rotation : générer un nouveau refresh token et révoquer l'ancien
+    const newRefreshResult = generateRefreshToken({ userId: user.id });
+    if (!newRefreshResult.ok) return newRefreshResult;
+
+    this._userService.saveRefreshToken(user.id, hashToken(newRefreshResult.data));
+
+    return success({
+      accessToken: accessResult.data,
+      refreshToken: newRefreshResult.data,
+    });
   }
 
   // ========== LOGOUT ==========

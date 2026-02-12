@@ -72,7 +72,7 @@ describe('Auth API', () => {
       expect(res.json().success).toBe(false);
     });
 
-    it('Erreur 409 si email déjà existant', async () => {
+    it('Anti-énumération : même 201 si email déjà existant (sans accessToken)', async () => {
       await ctx.fastify.inject({
         method: 'POST',
         url: '/api/auth/register',
@@ -85,8 +85,11 @@ describe('Auth API', () => {
         payload: { email: 'dup@example.com', password: 'password456' },
       });
 
-      expect(res.statusCode).toBe(409);
-      expect(res.json().success).toBe(false);
+      // Même code 201 pour ne pas révéler l'existence de l'email
+      expect(res.statusCode).toBe(201);
+      expect(res.json().success).toBe(true);
+      // Mais pas d'accessToken (le compte n'a pas été créé)
+      expect(res.json().accessToken).toBeUndefined();
     });
   });
 
@@ -162,7 +165,7 @@ describe('Auth API', () => {
   // ========== REFRESH ==========
 
   describe('POST /api/auth/refresh', () => {
-    it('Retourne un nouveau accessToken avec un cookie valide', async () => {
+    it('Retourne un nouveau accessToken + nouveau refresh cookie (rotation)', async () => {
       // Register pour obtenir le refresh cookie
       const registerRes = await ctx.fastify.inject({
         method: 'POST',
@@ -185,6 +188,38 @@ describe('Auth API', () => {
       const body = res.json();
       expect(body.success).toBe(true);
       expect(body.accessToken).toBeDefined();
+
+      // Vérifie qu'un nouveau refresh cookie est renvoyé (rotation)
+      const newRefreshCookie = res.cookies.find((c: any) => c.name === 'refresh_token');
+      expect(newRefreshCookie).toBeDefined();
+      expect(newRefreshCookie!.value).not.toBe(refreshCookie!.value);
+    });
+
+    it('Ancien refresh token révoqué après rotation', async () => {
+      const registerRes = await ctx.fastify.inject({
+        method: 'POST',
+        url: '/api/auth/register',
+        payload: { email: 'rotate@example.com', password: 'password123' },
+      });
+
+      const oldCookie = registerRes.cookies.find((c: any) => c.name === 'refresh_token');
+      expect(oldCookie).toBeDefined();
+
+      // Premier refresh → rotation
+      await ctx.fastify.inject({
+        method: 'POST',
+        url: '/api/auth/refresh',
+        cookies: { refresh_token: oldCookie!.value },
+      });
+
+      // Réutiliser l'ancien token → doit échouer
+      const res = await ctx.fastify.inject({
+        method: 'POST',
+        url: '/api/auth/refresh',
+        cookies: { refresh_token: oldCookie!.value },
+      });
+
+      expect(res.statusCode).toBe(401);
     });
 
     it('Erreur 401 si pas de cookie', async () => {
@@ -278,10 +313,11 @@ describe('Auth API', () => {
       expect(refreshRes.statusCode).toBe(200);
       expect(refreshRes.json().accessToken).toBeDefined();
 
-      // 4. Logout
+      // 4. Logout avec le token du refresh
       const logoutRes = await ctx.fastify.inject({
         method: 'POST',
         url: '/api/auth/logout',
+        headers: { authorization: `Bearer ${refreshRes.json().accessToken}` },
       });
       expect(logoutRes.statusCode).toBe(200);
       expect(logoutRes.json().success).toBe(true);

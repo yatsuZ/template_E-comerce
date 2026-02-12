@@ -1,19 +1,22 @@
 import { FastifyInstance } from 'fastify';
 import { authMiddleware, adminMiddleware } from '../../middlewares/auth.middleware.js';
 import { createProductSchema, updateProductSchema } from '../../core/schema/product.schema.js';
+import { paginationSchema } from '../../core/schema/pagination.schema.js';
+import { Logger } from '../../utils/logger.js';
 
 export async function productRoutes(fastify: FastifyInstance) {
 	const productService = fastify.productService;
 
 	// ========== PUBLIC ==========
 
-	// GET /api/products → Liste tous les produits
+	// GET /api/products → Liste tous les produits (paginé)
 	fastify.get('/', async (request, reply) => {
-		const result = productService.getAll();
+		const pagination = paginationSchema.parse(request.query);
+		const result = productService.getAllPaginated(pagination);
 		if (!result.ok) {
 			return reply.code(500).send({ success: false, error: result.error.message });
 		}
-		return reply.code(200).send({ success: true, data: result.data });
+		return reply.code(200).send({ success: true, ...result.data });
 	});
 
 	// GET /api/products/:id → Détail d'un produit
@@ -56,6 +59,7 @@ export async function productRoutes(fastify: FastifyInstance) {
 			const statusCode = result.error.type === 'CONFLICT' ? 409 : 400;
 			return reply.code(statusCode).send({ success: false, error: result.error.message });
 		}
+		Logger.audit('ADMIN_CREATE_PRODUCT', { adminId: request.user.userId, productId: result.data.id, name: parsed.data.name });
 		return reply.code(201).send({ success: true, data: result.data });
 	});
 
@@ -81,6 +85,7 @@ export async function productRoutes(fastify: FastifyInstance) {
 			const statusCode = result.error.type === 'NOT_FOUND' ? 404 : 400;
 			return reply.code(statusCode).send({ success: false, error: result.error.message });
 		}
+		Logger.audit('ADMIN_UPDATE_PRODUCT', { adminId: request.user.userId, productId });
 		return reply.code(200).send({ success: true, data: result.data });
 	});
 
@@ -96,6 +101,7 @@ export async function productRoutes(fastify: FastifyInstance) {
 		if (!result.ok) {
 			return reply.code(404).send({ success: false, error: 'Product not found' });
 		}
+		Logger.audit('ADMIN_DELETE_PRODUCT', { adminId: request.user.userId, productId });
 		return reply.code(200).send({ success: true, message: 'Product deleted' });
 	});
 }

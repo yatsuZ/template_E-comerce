@@ -35,6 +35,21 @@ export type Result<T> = Success<T> | Failure;
 
 ////////////
 
+/* Pagination */
+
+export interface PaginationOptions {
+  page: number;
+  limit: number;
+}
+
+export interface Paginated<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 /* Helpers */
 
 export function success<T>(data: T): Success<T>
