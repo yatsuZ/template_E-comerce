@@ -126,6 +126,43 @@ export async function userRoutes(fastify: FastifyInstance) {
 		return reply.code(200).send({ success: true, data: sanitizeUser(result.data) });
 	});
 
+	// PATCH /api/users/:id/ban → Bannir un user (admin)
+	fastify.patch('/:id/ban', { preHandler: [authMiddleware, adminMiddleware] }, async (request, reply) => {
+		const { id } = request.params as { id: string };
+		const userId = parseInt(id, 10);
+		if (isNaN(userId)) {
+			return reply.code(400).send({ success: false, error: 'Invalid user ID' });
+		}
+
+		const result = userService.banUser(userId);
+		if (!result.ok) {
+			const statusCode = result.error.type === 'NOT_FOUND' ? 404
+				: result.error.type === 'FORBIDDEN' ? 403
+				: result.error.type === 'CONFLICT' ? 409 : 500;
+			return reply.code(statusCode).send({ success: false, error: result.error.message });
+		}
+		Logger.audit('ADMIN_BAN_USER', { adminId: request.user.userId, targetUserId: userId, ip: request.ip });
+		return reply.code(200).send({ success: true, data: sanitizeUser(result.data) });
+	});
+
+	// PATCH /api/users/:id/unban → Débannir un user (admin)
+	fastify.patch('/:id/unban', { preHandler: [authMiddleware, adminMiddleware] }, async (request, reply) => {
+		const { id } = request.params as { id: string };
+		const userId = parseInt(id, 10);
+		if (isNaN(userId)) {
+			return reply.code(400).send({ success: false, error: 'Invalid user ID' });
+		}
+
+		const result = userService.unbanUser(userId);
+		if (!result.ok) {
+			const statusCode = result.error.type === 'NOT_FOUND' ? 404
+				: result.error.type === 'CONFLICT' ? 409 : 500;
+			return reply.code(statusCode).send({ success: false, error: result.error.message });
+		}
+		Logger.audit('ADMIN_UNBAN_USER', { adminId: request.user.userId, targetUserId: userId, ip: request.ip });
+		return reply.code(200).send({ success: true, data: sanitizeUser(result.data) });
+	});
+
 	// DELETE /api/users/:id → Supprimer un user (admin)
 	fastify.delete('/:id', { preHandler: [authMiddleware, adminMiddleware] }, async (request, reply) => {
 		const { id } = request.params as { id: string };

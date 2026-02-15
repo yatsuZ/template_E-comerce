@@ -6,6 +6,8 @@ import { productRoutes } from './api/products.js';
 import { userRoutes } from './api/users.js';
 import { cartRoutes } from './api/cart.js';
 import { orderRoutes } from './api/orders.js';
+import { statsRoutes } from './api/stats.js';
+import { articleRoutes } from './api/articles.js';
 
 export async function setupRoutes(fastify: FastifyInstance) {
 	// Routes API
@@ -16,6 +18,8 @@ export async function setupRoutes(fastify: FastifyInstance) {
 	await fastify.register(userRoutes, { prefix: '/api/users' });
 	await fastify.register(cartRoutes, { prefix: '/api/cart' });
 	await fastify.register(orderRoutes, { prefix: '/api/orders' });
+	await fastify.register(statsRoutes, { prefix: '/api/stats' });
+	await fastify.register(articleRoutes, { prefix: '/api/articles' });
 
 	// Route principale
 	fastify.get('/', async (request, reply) => {

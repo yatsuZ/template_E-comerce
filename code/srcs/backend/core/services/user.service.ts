@@ -161,6 +161,33 @@ export class UserService {
     return success(true);
   }
 
+  // ========== BAN ==========
+
+  banUser(userId: number): Result<I_User> {
+    const userResult = this._userRepo.findById(userId);
+    if (!userResult.ok)
+      return failure('NOT_FOUND', `${location} banUser: user not found`);
+
+    if (userResult.data.is_admin === 1)
+      return failure('FORBIDDEN', `${location} banUser: cannot ban an admin`);
+
+    if (userResult.data.banned === 1)
+      return failure('CONFLICT', `${location} banUser: user is already banned`);
+
+    return this._userRepo.update(userId, { banned: 1 });
+  }
+
+  unbanUser(userId: number): Result<I_User> {
+    const userResult = this._userRepo.findById(userId);
+    if (!userResult.ok)
+      return failure('NOT_FOUND', `${location} unbanUser: user not found`);
+
+    if (userResult.data.banned === 0)
+      return failure('CONFLICT', `${location} unbanUser: user is not banned`);
+
+    return this._userRepo.update(userId, { banned: 0 });
+  }
+
   // ========== SESSION ==========
 
   saveRefreshToken(userId: number, refreshToken: string): Result<I_User> {

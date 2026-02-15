@@ -9,12 +9,15 @@ import { ProductRepository } from './core/repositories/product.repository.js';
 import { CartRepository } from './core/repositories/cart.repository.js';
 import { OrderRepository } from './core/repositories/order.repository.js';
 import { OrderItemsRepository } from './core/repositories/order_items.repository.js';
+import { ArticleRepository } from './core/repositories/article.repository.js';
 import { UserService } from './core/services/user.service.js';
 import { ProductService } from './core/services/products.service.js';
 import { CartService } from './core/services/cart.service.js';
 import { OrderService } from './core/services/order.service.js';
 import { OrderItemService } from './core/services/order_items.service.js';
 import { AuthService } from './core/services/auth.service.js';
+import { StatsService } from './core/services/stats.service.js';
+import { ArticleService } from './core/services/article.service.js';
 import { seedAdmin } from './utils/seed.js';
 
 const location = "main.ts"
@@ -37,6 +40,7 @@ const start = async () => {
     const cartRepo = new CartRepository(conn);
     const orderRepo = new OrderRepository(conn);
     const orderItemsRepo = new OrderItemsRepository(conn);
+    const articleRepo = new ArticleRepository(conn);
 
     // Services
     const userService = new UserService(userRepo);
@@ -45,6 +49,8 @@ const start = async () => {
     const orderItemService = new OrderItemService(orderItemsRepo);
     const orderService = new OrderService(orderRepo, orderItemService, cartService, productService, userService);
     const authService = new AuthService(userService);
+    const statsService = new StatsService(conn);
+    const articleService = new ArticleService(articleRepo);
 
     await seedAdmin(userService);
 
@@ -55,6 +61,8 @@ const start = async () => {
       cartService,
       orderService,
       orderItemService,
+      statsService,
+      articleService,
     });
 
 		process.on('SIGINT', () => shutdown(fastify, db, 'SIGINT'));

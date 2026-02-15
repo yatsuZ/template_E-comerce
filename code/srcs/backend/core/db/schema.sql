@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   google_id TEXT UNIQUE,
   provider TEXT DEFAULT 'local', -- local | google
   is_admin INTEGER DEFAULT 0, -- 0 = user normal, 1 = admin
+  banned INTEGER DEFAULT 0, -- 0 = actif, 1 = banni
   refresh_token TEXT DEFAULT NULL, -- NULL = logged out, token = logged in
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP

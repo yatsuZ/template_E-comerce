@@ -7,8 +7,8 @@ import { Result } from '../../utils/Error/ErrorManagement.js';
 
 const location = "core/repositories/user.repository.ts"
 
-type UserCreate = Omit<I_User, 'id' | 'refresh_token' | 'created_at' | 'updated_at'>;
-type UserUpdate = Partial<Pick<I_User, 'email' | 'password' | 'refresh_token'>>;
+type UserCreate = Omit<I_User, 'id' | 'banned' | 'refresh_token' | 'created_at' | 'updated_at'>;
+type UserUpdate = Partial<Pick<I_User, 'email' | 'password' | 'refresh_token' | 'banned'>>;
 
 export class UserRepository extends BaseRepository<I_User, UserCreate, UserUpdate> {
   constructor(db: Database.Database) {

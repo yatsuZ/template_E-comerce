@@ -1,18 +1,22 @@
 import { expect } from 'vitest';
 import Fastify, { FastifyInstance } from 'fastify';
 import fastifyCookie from '@fastify/cookie';
+import fastifyMultipart from '@fastify/multipart';
 import { DatabaseManager } from '../../backend/config/db.js';
 import { UserRepository } from '../../backend/core/repositories/user.repository.js';
 import { ProductRepository } from '../../backend/core/repositories/product.repository.js';
 import { CartRepository } from '../../backend/core/repositories/cart.repository.js';
 import { OrderRepository } from '../../backend/core/repositories/order.repository.js';
 import { OrderItemsRepository } from '../../backend/core/repositories/order_items.repository.js';
+import { ArticleRepository } from '../../backend/core/repositories/article.repository.js';
 import { UserService } from '../../backend/core/services/user.service.js';
 import { ProductService } from '../../backend/core/services/products.service.js';
 import { CartService } from '../../backend/core/services/cart.service.js';
 import { OrderService } from '../../backend/core/services/order.service.js';
 import { OrderItemService } from '../../backend/core/services/order_items.service.js';
 import { AuthService } from '../../backend/core/services/auth.service.js';
+import { StatsService } from '../../backend/core/services/stats.service.js';
+import { ArticleService } from '../../backend/core/services/article.service.js';
 import { setupRoutes } from '../../backend/routes/index.js';
 
 // ========== ASSERTIONS ==========
@@ -37,6 +41,7 @@ export interface TestContext {
   cartRepo: CartRepository;
   orderRepo: OrderRepository;
   orderItemsRepo: OrderItemsRepository;
+  articleRepo: ArticleRepository;
   // Services
   userService: UserService;
   productService: ProductService;
@@ -44,6 +49,8 @@ export interface TestContext {
   orderService: OrderService;
   orderItemService: OrderItemService;
   authService: AuthService;
+  statsService: StatsService;
+  articleService: ArticleService;
 }
 
 /**
@@ -59,6 +66,7 @@ export function createTestContext(): TestContext {
   const cartRepo = new CartRepository(conn);
   const orderRepo = new OrderRepository(conn);
   const orderItemsRepo = new OrderItemsRepository(conn);
+  const articleRepo = new ArticleRepository(conn);
 
   // Services
   const userService = new UserService(userRepo);
@@ -67,6 +75,8 @@ export function createTestContext(): TestContext {
   const orderItemService = new OrderItemService(orderItemsRepo);
   const orderService = new OrderService(orderRepo, orderItemService, cartService, productService, userService);
   const authService = new AuthService(userService);
+  const statsService = new StatsService(conn);
+  const articleService = new ArticleService(articleRepo);
 
   return {
     db,
@@ -75,12 +85,15 @@ export function createTestContext(): TestContext {
     cartRepo,
     orderRepo,
     orderItemsRepo,
+    articleRepo,
     userService,
     productService,
     cartService,
     orderService,
     orderItemService,
     authService,
+    statsService,
+    articleService,
   };
 }
 
@@ -225,12 +238,15 @@ export async function createApiTestContext(): Promise<ApiTestContext> {
 
   const fastify = Fastify({ logger: false });
   await fastify.register(fastifyCookie);
+  await fastify.register(fastifyMultipart, { limits: { fileSize: 5 * 1024 * 1024 } });
   fastify.decorate('authService', ctx.authService);
   fastify.decorate('userService', ctx.userService);
   fastify.decorate('productService', ctx.productService);
   fastify.decorate('cartService', ctx.cartService);
   fastify.decorate('orderService', ctx.orderService);
   fastify.decorate('orderItemService', ctx.orderItemService);
+  fastify.decorate('statsService', ctx.statsService);
+  fastify.decorate('articleService', ctx.articleService);
   await setupRoutes(fastify);
   await fastify.ready();
 

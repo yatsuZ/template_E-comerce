@@ -6,6 +6,7 @@ export interface I_User {
   google_id: string | null;
   provider: 'local' | 'google';
   is_admin: number;
+  banned: number;
   refresh_token: string | null;
   created_at: string;
   updated_at: string;

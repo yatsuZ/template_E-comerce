@@ -1,4 +1,7 @@
 compte-rendu-claude.md
+./ignore/*
+./ignore
+ignore
 # Logs
 logs
 *.log

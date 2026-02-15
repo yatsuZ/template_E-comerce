@@ -83,6 +83,13 @@ export async function authRoutes(fastify: FastifyInstance) {
 		const result = await authService.login(email, password);
 
 		if (!result.ok) {
+			if (result.error.type === 'FORBIDDEN') {
+				Logger.audit('LOGIN_BANNED', { email, ip: request.ip });
+				return reply.code(403).send({
+					success: false,
+					error: 'Account is banned',
+				});
+			}
 			Logger.audit('LOGIN_FAILED', { email, ip: request.ip });
 			return reply.code(401).send({
 				success: false,

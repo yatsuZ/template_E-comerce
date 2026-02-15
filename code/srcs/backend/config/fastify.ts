@@ -5,6 +5,7 @@ import fastifyCookie from '@fastify/cookie';
 import fastifyCors from '@fastify/cors';
 import fastifyRateLimit from '@fastify/rate-limit';
 import fastifyHelmet from '@fastify/helmet';
+import fastifyMultipart from '@fastify/multipart';
 import ejs from 'ejs';
 import path from 'path';
 import { showLog } from '../utils/logger.js';
@@ -15,6 +16,8 @@ import { ProductService } from '../core/services/products.service.js';
 import { CartService } from '../core/services/cart.service.js';
 import { OrderService } from '../core/services/order.service.js';
 import { OrderItemService } from '../core/services/order_items.service.js';
+import { StatsService } from '../core/services/stats.service.js';
+import { ArticleService } from '../core/services/article.service.js';
 
 // Type augmentation pour accéder aux services via fastify
 declare module 'fastify' {
@@ -25,6 +28,8 @@ declare module 'fastify' {
 		cartService: CartService;
 		orderService: OrderService;
 		orderItemService: OrderItemService;
+		statsService: StatsService;
+		articleService: ArticleService;
 	}
 }
 
@@ -35,6 +40,8 @@ export interface AppServices {
 	cartService: CartService;
 	orderService: OrderService;
 	orderItemService: OrderItemService;
+	statsService: StatsService;
+	articleService: ArticleService;
 }
 
 export async function buildFastify(services: AppServices): Promise<FastifyInstance> {
@@ -55,6 +62,9 @@ export async function buildFastify(services: AppServices): Promise<FastifyInstan
 
 	// Plugins
 	await fastify.register(fastifyCookie);
+	await fastify.register(fastifyMultipart, {
+		limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+	});
 
 	// Décorer fastify avec les services
 	fastify.decorate('authService', services.authService);
@@ -63,6 +73,8 @@ export async function buildFastify(services: AppServices): Promise<FastifyInstan
 	fastify.decorate('cartService', services.cartService);
 	fastify.decorate('orderService', services.orderService);
 	fastify.decorate('orderItemService', services.orderItemService);
+	fastify.decorate('statsService', services.statsService);
+	fastify.decorate('articleService', services.articleService);
 
 	// Templates EJS
 	await fastify.register(fastifyView, {

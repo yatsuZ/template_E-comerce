@@ -71,6 +71,10 @@ export class AuthService {
 
     const user = userResult.data;
 
+    // Vérifier si l'utilisateur est banni
+    if (user.banned === 1)
+      return failure('FORBIDDEN', `${location} login: account is banned`);
+
     // Vérifier le mot de passe
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch)
