@@ -8,7 +8,7 @@ export async function statsRoutes(fastify: FastifyInstance) {
 	fastify.get('/', { preHandler: [authMiddleware, adminMiddleware] }, async (request, reply) => {
 		const result = statsService.getDashboardStats();
 		if (!result.ok) {
-			return reply.code(500).send({ success: false, error: result.error.message });
+			return reply.code(500).send({ success: false, error: 'Server error' });
 		}
 		return reply.code(200).send({ success: true, data: result.data });
 	});

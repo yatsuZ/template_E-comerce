@@ -3,6 +3,7 @@ import { authMiddleware, adminMiddleware } from '../../middlewares/auth.middlewa
 import { createProductSchema, updateProductSchema } from '../../core/schema/product.schema.js';
 import { paginationSchema } from '../../core/schema/pagination.schema.js';
 import { Logger } from '../../utils/logger.js';
+import { safeError } from '../../utils/Error/ErrorManagement.js';
 
 export async function productRoutes(fastify: FastifyInstance) {
 	const productService = fastify.productService;
@@ -14,7 +15,7 @@ export async function productRoutes(fastify: FastifyInstance) {
 		const pagination = paginationSchema.parse(request.query);
 		const result = productService.getAllPaginated(pagination);
 		if (!result.ok) {
-			return reply.code(500).send({ success: false, error: result.error.message });
+			return reply.code(500).send({ success: false, error: 'Server error' });
 		}
 		return reply.code(200).send({ success: true, ...result.data });
 	});
@@ -57,7 +58,7 @@ export async function productRoutes(fastify: FastifyInstance) {
 
 		if (!result.ok) {
 			const statusCode = result.error.type === 'CONFLICT' ? 409 : 400;
-			return reply.code(statusCode).send({ success: false, error: result.error.message });
+			return reply.code(statusCode).send({ success: false, error: safeError(result.error) });
 		}
 		Logger.audit('ADMIN_CREATE_PRODUCT', { adminId: request.user.userId, productId: result.data.id, name: parsed.data.name });
 		return reply.code(201).send({ success: true, data: result.data });
@@ -83,7 +84,7 @@ export async function productRoutes(fastify: FastifyInstance) {
 		const result = productService.updateProduct(productId, parsed.data);
 		if (!result.ok) {
 			const statusCode = result.error.type === 'NOT_FOUND' ? 404 : 400;
-			return reply.code(statusCode).send({ success: false, error: result.error.message });
+			return reply.code(statusCode).send({ success: false, error: safeError(result.error) });
 		}
 		Logger.audit('ADMIN_UPDATE_PRODUCT', { adminId: request.user.userId, productId });
 		return reply.code(200).send({ success: true, data: result.data });

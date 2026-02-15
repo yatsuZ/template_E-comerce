@@ -3,6 +3,25 @@ import { I_Article, I_ArticleTree } from '../interfaces/article.interfaces.js';
 import { Result, success, failure, PaginationOptions, Paginated } from '../../utils/Error/ErrorManagement.js';
 
 const location = 'core/services/article.service.ts';
+const MAX_ARTICLES = 20;
+
+// Patterns dangereux dans le contenu markdown (XSS, injection)
+const MALICIOUS_PATTERNS = [
+  /<script[\s>]/i,
+  /<\/script>/i,
+  /javascript\s*:/i,
+  /on\w+\s*=/i,               // onclick=, onerror=, onload=, etc.
+  /<iframe[\s>]/i,
+  /<object[\s>]/i,
+  /<embed[\s>]/i,
+  /<form[\s>]/i,
+  /<input[\s>]/i,
+  /data\s*:\s*text\/html/i,
+  /<link[\s>]/i,
+  /<meta[\s>]/i,
+  /expression\s*\(/i,          // CSS expression()
+  /url\s*\(\s*javascript/i,
+];
 
 export class ArticleService {
   constructor(private _articleRepo: ArticleRepository) {}
@@ -17,6 +36,16 @@ export class ArticleService {
     author_id: number;
     published: number;
   }): Result<I_Article> {
+    // Vérifier la limite d'articles
+    const allResult = this._articleRepo.findAll();
+    if (allResult.ok && allResult.data.length >= MAX_ARTICLES)
+      return failure('FORBIDDEN', `${location} createArticle: article limit reached (max ${MAX_ARTICLES})`);
+
+    // Vérifier l'absence de contenu malveillant
+    const maliciousCheck = this.containsMaliciousContent(data.content);
+    if (maliciousCheck)
+      return failure('VALIDATION', `${location} createArticle: content contains forbidden pattern (${maliciousCheck})`);
+
     // Vérifier l'unicité du slug
     const existing = this._articleRepo.findBySlug(data.slug);
     if (!existing.ok) return existing;
@@ -137,6 +166,13 @@ export class ArticleService {
     if (!existing.ok)
       return failure('NOT_FOUND', `${location} updateArticle: article not found`);
 
+    // Vérifier l'absence de contenu malveillant si modifié
+    if (data.content !== undefined) {
+      const maliciousCheck = this.containsMaliciousContent(data.content);
+      if (maliciousCheck)
+        return failure('VALIDATION', `${location} updateArticle: content contains forbidden pattern (${maliciousCheck})`);
+    }
+
     // Vérifier l'unicité du slug si modifié
     if (data.slug && data.slug !== existing.data.slug) {
       const slugCheck = this._articleRepo.findBySlug(data.slug);
@@ -171,6 +207,17 @@ export class ArticleService {
   }
 
   // ========== HELPERS ==========
+
+  /**
+   * Vérifie si le contenu contient des patterns malveillants (XSS, injection)
+   * Retourne le pattern trouvé ou null si le contenu est safe
+   */
+  private containsMaliciousContent(content: string): string | null {
+    for (const pattern of MALICIOUS_PATTERNS) {
+      if (pattern.test(content)) return pattern.source;
+    }
+    return null;
+  }
 
   private generateSlug(title: string): string {
     let slug = title

@@ -3,6 +3,7 @@ import { authMiddleware, adminMiddleware } from '../../middlewares/auth.middlewa
 import { updateOrderStatusSchema } from '../../core/schema/order.schema.js';
 import { paginationSchema } from '../../core/schema/pagination.schema.js';
 import { Logger } from '../../utils/logger.js';
+import { safeError } from '../../utils/Error/ErrorManagement.js';
 
 export async function orderRoutes(fastify: FastifyInstance) {
 	const orderService = fastify.orderService;
@@ -18,7 +19,7 @@ export async function orderRoutes(fastify: FastifyInstance) {
 		const result = orderService.checkout(request.user.userId);
 		if (!result.ok) {
 			const statusCode = result.error.type === 'NOT_FOUND' ? 404 : 400;
-			return reply.code(statusCode).send({ success: false, error: result.error.message });
+			return reply.code(statusCode).send({ success: false, error: safeError(result.error) });
 		}
 		return reply.code(201).send({ success: true, data: result.data });
 	});
@@ -30,7 +31,7 @@ export async function orderRoutes(fastify: FastifyInstance) {
 		const pagination = paginationSchema.parse(request.query);
 		const result = orderService.getOrdersByUserIdPaginated(request.user.userId, pagination);
 		if (!result.ok) {
-			return reply.code(500).send({ success: false, error: result.error.message });
+			return reply.code(500).send({ success: false, error: 'Server error' });
 		}
 		return reply.code(200).send({ success: true, ...result.data });
 	});
@@ -84,7 +85,7 @@ export async function orderRoutes(fastify: FastifyInstance) {
 
 		const result = orderService.cancelOrder(orderId);
 		if (!result.ok) {
-			return reply.code(400).send({ success: false, error: result.error.message });
+			return reply.code(400).send({ success: false, error: safeError(result.error) });
 		}
 		return reply.code(200).send({ success: true, data: result.data });
 	});
@@ -96,7 +97,7 @@ export async function orderRoutes(fastify: FastifyInstance) {
 		const pagination = paginationSchema.parse(request.query);
 		const result = orderService.getAllOrdersPaginated(pagination);
 		if (!result.ok) {
-			return reply.code(500).send({ success: false, error: result.error.message });
+			return reply.code(500).send({ success: false, error: 'Server error' });
 		}
 		return reply.code(200).send({ success: true, ...result.data });
 	});
@@ -121,7 +122,7 @@ export async function orderRoutes(fastify: FastifyInstance) {
 		const result = orderService.updateStatus(orderId, parsed.data.status);
 		if (!result.ok) {
 			const statusCode = result.error.type === 'NOT_FOUND' ? 404 : 400;
-			return reply.code(statusCode).send({ success: false, error: result.error.message });
+			return reply.code(statusCode).send({ success: false, error: safeError(result.error) });
 		}
 		Logger.audit('ADMIN_UPDATE_ORDER_STATUS', { adminId: request.user.userId, orderId, status: parsed.data.status });
 		return reply.code(200).send({ success: true, data: result.data });

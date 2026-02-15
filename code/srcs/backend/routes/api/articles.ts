@@ -3,6 +3,7 @@ import { authMiddleware, adminMiddleware } from '../../middlewares/auth.middlewa
 import { createArticleSchema, updateArticleSchema } from '../../core/schema/article.schema.js';
 import { paginationSchema } from '../../core/schema/pagination.schema.js';
 import { Logger } from '../../utils/logger.js';
+import { safeError } from '../../utils/Error/ErrorManagement.js';
 
 export async function articleRoutes(fastify: FastifyInstance) {
 	const articleService = fastify.articleService;
@@ -14,7 +15,7 @@ export async function articleRoutes(fastify: FastifyInstance) {
 		const pagination = paginationSchema.parse(request.query);
 		const result = articleService.getPublishedPaginated(pagination);
 		if (!result.ok) {
-			return reply.code(500).send({ success: false, error: result.error.message });
+			return reply.code(500).send({ success: false, error: 'Server error' });
 		}
 		return reply.code(200).send({
 			success: true,
@@ -30,7 +31,7 @@ export async function articleRoutes(fastify: FastifyInstance) {
 	fastify.get('/tree', async (request, reply) => {
 		const result = articleService.getTree();
 		if (!result.ok) {
-			return reply.code(500).send({ success: false, error: result.error.message });
+			return reply.code(500).send({ success: false, error: 'Server error' });
 		}
 		return reply.code(200).send({ success: true, data: result.data });
 	});
@@ -52,7 +53,7 @@ export async function articleRoutes(fastify: FastifyInstance) {
 		const pagination = paginationSchema.parse(request.query);
 		const result = articleService.getAllPaginated(pagination);
 		if (!result.ok) {
-			return reply.code(500).send({ success: false, error: result.error.message });
+			return reply.code(500).send({ success: false, error: 'Server error' });
 		}
 		return reply.code(200).send({
 			success: true,
@@ -99,7 +100,7 @@ export async function articleRoutes(fastify: FastifyInstance) {
 		if (!result.ok) {
 			const statusCode = result.error.type === 'CONFLICT' ? 409
 				: result.error.type === 'NOT_FOUND' ? 404 : 400;
-			return reply.code(statusCode).send({ success: false, error: result.error.message });
+			return reply.code(statusCode).send({ success: false, error: safeError(result.error) });
 		}
 
 		Logger.audit('ADMIN_CREATE_ARTICLE', { adminId: request.user.userId, articleId: result.data.id, title: parsed.data.title });
@@ -132,7 +133,7 @@ export async function articleRoutes(fastify: FastifyInstance) {
 		const result = articleService.createFromMarkdown(title, content, request.user.userId, parentId);
 		if (!result.ok) {
 			const statusCode = result.error.type === 'CONFLICT' ? 409 : 400;
-			return reply.code(statusCode).send({ success: false, error: result.error.message });
+			return reply.code(statusCode).send({ success: false, error: safeError(result.error) });
 		}
 
 		Logger.audit('ADMIN_UPLOAD_ARTICLE', { adminId: request.user.userId, articleId: result.data.id, filename });
@@ -161,7 +162,7 @@ export async function articleRoutes(fastify: FastifyInstance) {
 			const statusCode = result.error.type === 'NOT_FOUND' ? 404
 				: result.error.type === 'CONFLICT' ? 409
 				: result.error.type === 'INVALID_ARG' ? 400 : 500;
-			return reply.code(statusCode).send({ success: false, error: result.error.message });
+			return reply.code(statusCode).send({ success: false, error: safeError(result.error) });
 		}
 
 		Logger.audit('ADMIN_UPDATE_ARTICLE', { adminId: request.user.userId, articleId });

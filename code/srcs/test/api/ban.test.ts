@@ -227,4 +227,53 @@ describe('Ban/Unban API', () => {
       expect(res.json().accessToken).toBeDefined();
     });
   });
+
+  // ========== TOKEN VALIDE MAIS BANNI ==========
+
+  describe('Token valide mais user banni', () => {
+    it('403 sur /api/users/me si banni avec un token encore valide', async () => {
+      const adminToken = await getAdminToken(ctx);
+      const userToken = await registerAndLogin(ctx, 'banned@test.com', 'password123');
+      const userId = getUserIdByEmail(ctx, 'banned@test.com');
+
+      // Bannir le user (son token est encore valide 15min)
+      await ctx.fastify.inject({
+        method: 'PATCH',
+        url: `/api/users/${userId}/ban`,
+        headers: { authorization: `Bearer ${adminToken}` },
+      });
+
+      // Essayer d'acceder a une route protegee avec le token encore valide
+      const res = await ctx.fastify.inject({
+        method: 'GET',
+        url: '/api/users/me',
+        headers: { authorization: `Bearer ${userToken}` },
+      });
+
+      expect(res.statusCode).toBe(403);
+      expect(res.json().success).toBe(false);
+      expect(res.json().error).toBe('Account is banned');
+    });
+
+    it('403 sur /api/cart si banni avec un token encore valide', async () => {
+      const adminToken = await getAdminToken(ctx);
+      const userToken = await registerAndLogin(ctx, 'banned2@test.com', 'password123');
+      const userId = getUserIdByEmail(ctx, 'banned2@test.com');
+
+      await ctx.fastify.inject({
+        method: 'PATCH',
+        url: `/api/users/${userId}/ban`,
+        headers: { authorization: `Bearer ${adminToken}` },
+      });
+
+      const res = await ctx.fastify.inject({
+        method: 'GET',
+        url: '/api/cart',
+        headers: { authorization: `Bearer ${userToken}` },
+      });
+
+      expect(res.statusCode).toBe(403);
+      expect(res.json().error).toBe('Account is banned');
+    });
+  });
 });

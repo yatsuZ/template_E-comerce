@@ -3,6 +3,7 @@ import { authMiddleware, adminMiddleware } from '../../middlewares/auth.middlewa
 import { updateEmailSchema, updatePasswordSchema, deleteAccountSchema } from '../../core/schema/user.schema.js';
 import { paginationSchema } from '../../core/schema/pagination.schema.js';
 import { Logger } from '../../utils/logger.js';
+import { safeError } from '../../utils/Error/ErrorManagement.js';
 import { I_User } from '../../core/interfaces/user.interfaces.js';
 
 // Enlève les champs sensibles de la réponse
@@ -39,7 +40,7 @@ export async function userRoutes(fastify: FastifyInstance) {
 		const result = userService.updateEmail(request.user.userId, parsed.data.email);
 		if (!result.ok) {
 			const statusCode = result.error.type === 'CONFLICT' ? 409 : 400;
-			return reply.code(statusCode).send({ success: false, error: result.error.message });
+			return reply.code(statusCode).send({ success: false, error: safeError(result.error) });
 		}
 		return reply.code(200).send({ success: true, data: sanitizeUser(result.data) });
 	});
@@ -63,7 +64,7 @@ export async function userRoutes(fastify: FastifyInstance) {
 
 		const result = await userService.updatePassword(request.user.userId, parsed.data.newPassword);
 		if (!result.ok) {
-			return reply.code(400).send({ success: false, error: result.error.message });
+			return reply.code(400).send({ success: false, error: safeError(result.error) });
 		}
 		return reply.code(200).send({ success: true, data: sanitizeUser(result.data) });
 	});
@@ -87,7 +88,7 @@ export async function userRoutes(fastify: FastifyInstance) {
 
 		const result = userService.deleteUserById(request.user.userId);
 		if (!result.ok) {
-			return reply.code(500).send({ success: false, error: result.error.message });
+			return reply.code(500).send({ success: false, error: 'Server error' });
 		}
 		return reply.code(200).send({ success: true, message: 'Account deleted' });
 	});
@@ -99,7 +100,7 @@ export async function userRoutes(fastify: FastifyInstance) {
 		const pagination = paginationSchema.parse(request.query);
 		const result = userService.getAllPaginated(pagination);
 		if (!result.ok) {
-			return reply.code(500).send({ success: false, error: result.error.message });
+			return reply.code(500).send({ success: false, error: 'Server error' });
 		}
 		return reply.code(200).send({
 			success: true,
@@ -139,7 +140,7 @@ export async function userRoutes(fastify: FastifyInstance) {
 			const statusCode = result.error.type === 'NOT_FOUND' ? 404
 				: result.error.type === 'FORBIDDEN' ? 403
 				: result.error.type === 'CONFLICT' ? 409 : 500;
-			return reply.code(statusCode).send({ success: false, error: result.error.message });
+			return reply.code(statusCode).send({ success: false, error: safeError(result.error) });
 		}
 		Logger.audit('ADMIN_BAN_USER', { adminId: request.user.userId, targetUserId: userId, ip: request.ip });
 		return reply.code(200).send({ success: true, data: sanitizeUser(result.data) });
@@ -157,7 +158,7 @@ export async function userRoutes(fastify: FastifyInstance) {
 		if (!result.ok) {
 			const statusCode = result.error.type === 'NOT_FOUND' ? 404
 				: result.error.type === 'CONFLICT' ? 409 : 500;
-			return reply.code(statusCode).send({ success: false, error: result.error.message });
+			return reply.code(statusCode).send({ success: false, error: safeError(result.error) });
 		}
 		Logger.audit('ADMIN_UNBAN_USER', { adminId: request.user.userId, targetUserId: userId, ip: request.ip });
 		return reply.code(200).send({ success: true, data: sanitizeUser(result.data) });

@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { authMiddleware } from '../../middlewares/auth.middleware.js';
 import { addToCartSchema, updateCartSchema } from '../../core/schema/cart.schema.js';
 import { paginationSchema } from '../../core/schema/pagination.schema.js';
+import { safeError } from '../../utils/Error/ErrorManagement.js';
 
 export async function cartRoutes(fastify: FastifyInstance) {
 	const cartService = fastify.cartService;
@@ -16,7 +17,7 @@ export async function cartRoutes(fastify: FastifyInstance) {
 		const pagination = paginationSchema.parse(request.query);
 		const result = cartService.getCartByUserIdPaginated(request.user.userId, pagination);
 		if (!result.ok) {
-			return reply.code(500).send({ success: false, error: result.error.message });
+			return reply.code(500).send({ success: false, error: 'Server error' });
 		}
 		return reply.code(200).send({ success: true, ...result.data });
 	});
@@ -37,7 +38,7 @@ export async function cartRoutes(fastify: FastifyInstance) {
 		const result = cartService.addToCart(request.user.userId, parsed.data.product_id, parsed.data.quantity);
 		if (!result.ok) {
 			const statusCode = result.error.type === 'NOT_FOUND' ? 404 : 400;
-			return reply.code(statusCode).send({ success: false, error: result.error.message });
+			return reply.code(statusCode).send({ success: false, error: safeError(result.error) });
 		}
 		return reply.code(201).send({ success: true, data: result.data });
 	});
@@ -72,7 +73,7 @@ export async function cartRoutes(fastify: FastifyInstance) {
 
 		const result = cartService.updateQuantity(cartId, parsed.data.quantity);
 		if (!result.ok) {
-			return reply.code(400).send({ success: false, error: result.error.message });
+			return reply.code(400).send({ success: false, error: safeError(result.error) });
 		}
 		return reply.code(200).send({ success: true, data: result.data });
 	});
@@ -98,7 +99,7 @@ export async function cartRoutes(fastify: FastifyInstance) {
 
 		const result = cartService.removeFromCart(cartId);
 		if (!result.ok) {
-			return reply.code(500).send({ success: false, error: result.error.message });
+			return reply.code(500).send({ success: false, error: 'Server error' });
 		}
 		return reply.code(200).send({ success: true, message: 'Item removed from cart' });
 	});
@@ -107,7 +108,7 @@ export async function cartRoutes(fastify: FastifyInstance) {
 	fastify.delete('/', async (request, reply) => {
 		const result = cartService.clearCart(request.user.userId);
 		if (!result.ok) {
-			return reply.code(500).send({ success: false, error: result.error.message });
+			return reply.code(500).send({ success: false, error: 'Server error' });
 		}
 		return reply.code(200).send({ success: true, message: 'Cart cleared' });
 	});

@@ -37,6 +37,21 @@ export async function authMiddleware(request: FastifyRequest, reply: FastifyRepl
   }
 
   request.user = result.data;
+
+  // Vérifier si l'utilisateur est banni en BDD
+  const userResult = request.server.userService.getUserById(result.data.userId);
+  if (!userResult.ok) {
+    return reply.code(401).send({
+      success: false,
+      error: 'User not found',
+    });
+  }
+  if (userResult.data.banned === 1) {
+    return reply.code(403).send({
+      success: false,
+      error: 'Account is banned',
+    });
+  }
 }
 
 // ========== ADMIN MIDDLEWARE ==========

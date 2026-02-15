@@ -284,4 +284,77 @@ describe('ArticleService', () => {
       expect(res.ok).toBe(false);
     });
   });
+
+  // ========== SECURITE ==========
+
+  describe('Limite de 20 articles', () => {
+    it('Erreur si on depasse la limite de 20 articles', () => {
+      for (let i = 0; i < 20; i++) {
+        const res = ctx.articleService.createArticle({
+          title: `Art ${i}`, slug: `art-${i}`, content: '', parent_id: null, author_id: adminId, published: 0,
+        });
+        expect(res.ok).toBe(true);
+      }
+
+      const res = ctx.articleService.createArticle({
+        title: 'Art 21', slug: 'art-21', content: '', parent_id: null, author_id: adminId, published: 0,
+      });
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.error.type).toBe('FORBIDDEN');
+    });
+  });
+
+  describe('Contenu malveillant', () => {
+    it('Refuse un article avec une balise script', () => {
+      const res = ctx.articleService.createArticle({
+        title: 'XSS', slug: 'xss', content: '<script>alert("xss")</script>', parent_id: null, author_id: adminId, published: 0,
+      });
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.error.type).toBe('VALIDATION');
+    });
+
+    it('Refuse un article avec javascript:', () => {
+      const res = ctx.articleService.createArticle({
+        title: 'XSS2', slug: 'xss2', content: '[click](javascript:alert(1))', parent_id: null, author_id: adminId, published: 0,
+      });
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.error.type).toBe('VALIDATION');
+    });
+
+    it('Refuse un article avec onclick', () => {
+      const res = ctx.articleService.createArticle({
+        title: 'XSS3', slug: 'xss3', content: '<div onclick="alert(1)">click</div>', parent_id: null, author_id: adminId, published: 0,
+      });
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.error.type).toBe('VALIDATION');
+    });
+
+    it('Refuse un article avec iframe', () => {
+      const res = ctx.articleService.createArticle({
+        title: 'XSS4', slug: 'xss4', content: '<iframe src="http://evil.com"></iframe>', parent_id: null, author_id: adminId, published: 0,
+      });
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.error.type).toBe('VALIDATION');
+    });
+
+    it('Refuse la mise a jour avec contenu malveillant', () => {
+      const created = ctx.articleService.createArticle({
+        title: 'Safe', slug: 'safe', content: '# Hello', parent_id: null, author_id: adminId, published: 0,
+      });
+      if (!created.ok) throw new Error();
+
+      const res = ctx.articleService.updateArticle(created.data.id, {
+        content: '<script>document.cookie</script>',
+      });
+      expect(res.ok).toBe(false);
+      if (!res.ok) expect(res.error.type).toBe('VALIDATION');
+    });
+
+    it('Accepte du markdown normal', () => {
+      const res = ctx.articleService.createArticle({
+        title: 'Normal', slug: 'normal', content: '# Titre\n\n**bold** et *italic*\n\n```js\nconsole.log("ok")\n```\n\n[lien](https://example.com)', parent_id: null, author_id: adminId, published: 1,
+      });
+      expect(res.ok).toBe(true);
+    });
+  });
 });

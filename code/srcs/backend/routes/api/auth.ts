@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { registerSchema, loginSchema } from '../../core/schema/auth.schema.js';
 import { authMiddleware } from '../../middlewares/auth.middleware.js';
 import { Logger } from '../../utils/logger.js';
+import { safeError } from '../../utils/Error/ErrorManagement.js';
 
 const REFRESH_COOKIE_NAME = 'refresh_token';
 const REFRESH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60; // 7 jours en secondes
@@ -46,7 +47,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 			}
 			return reply.code(400).send({
 				success: false,
-				error: result.error.message,
+				error: safeError(result.error),
 			});
 		}
 

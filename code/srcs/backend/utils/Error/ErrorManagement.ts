@@ -61,3 +61,14 @@ export function failure(type: ErrorType, message: string, cause?: unknown): Fail
 {
   return {ok: false,  error: { type, message, cause }}
 };
+
+/**
+ * Nettoie un message d'erreur pour l'API (enlève le chemin interne)
+ * "core/services/user.service.ts banUser: cannot ban an admin"
+ *  → "cannot ban an admin"
+ */
+export function safeError(error: AppError): string {
+  const idx = error.message.indexOf(': ');
+  if (idx !== -1) return error.message.slice(idx + 2);
+  return error.message;
+}
