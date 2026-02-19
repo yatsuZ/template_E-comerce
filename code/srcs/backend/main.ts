@@ -18,7 +18,7 @@ import { OrderItemService } from './core/services/order_items.service.js';
 import { AuthService } from './core/services/auth.service.js';
 import { StatsService } from './core/services/stats.service.js';
 import { ArticleService } from './core/services/article.service.js';
-import { seedAdmin } from './utils/seed.js';
+import { seedAdmin, seedTestData } from './utils/seed.js';
 
 const location = "main.ts"
 
@@ -53,6 +53,12 @@ const start = async () => {
     const articleService = new ArticleService(articleRepo);
 
     await seedAdmin(userService);
+
+    // Seed test data (only in development, only if DB is empty)
+    const admin = userService.getUserByEmail(process.env.ADMIN_EMAIL || '');
+    if (admin.ok && admin.data) {
+      seedTestData(productService, articleService, admin.data.id);
+    }
 
     const fastify = await buildFastify({
       authService,

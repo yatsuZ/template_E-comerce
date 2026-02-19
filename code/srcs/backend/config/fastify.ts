@@ -82,9 +82,9 @@ export async function buildFastify(services: AppServices): Promise<FastifyInstan
 		root: path.join(process.cwd(), 'srcs/static/views'),
 	});
 
-	// CSS (depuis srcs)
+	// CSS (depuis dist, compilé par Tailwind)
 	await fastify.register(fastifyStatic, {
-		root: path.join(process.cwd(), 'srcs/static/css'),
+		root: path.join(process.cwd(), 'dist/static/css'),
 		prefix: '/static/css/',
 	});
 
@@ -92,6 +92,13 @@ export async function buildFastify(services: AppServices): Promise<FastifyInstan
 	await fastify.register(fastifyStatic, {
 		root: path.join(process.cwd(), 'dist/static/js'),
 		prefix: '/static/js/',
+		decorateReply: false,
+	});
+
+	// Fonts & assets statiques (depuis srcs)
+	await fastify.register(fastifyStatic, {
+		root: path.join(process.cwd(), 'srcs/static/utils'),
+		prefix: '/static/utils/',
 		decorateReply: false,
 	});
 

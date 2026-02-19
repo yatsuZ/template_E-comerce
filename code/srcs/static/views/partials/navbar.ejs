@@ -1,0 +1,71 @@
+<nav class="bg-bg-secondary/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+
+      <!-- Left nav links (desktop) -->
+      <div class="hidden md:flex items-center space-x-8">
+        <a href="/" class="font-sans text-sm uppercase tracking-wider text-text-secondary hover:text-text-primary transition-colors">Accueil</a>
+        <a href="/products" class="font-sans text-sm uppercase tracking-wider text-text-secondary hover:text-text-primary transition-colors">Produits</a>
+        <a href="/articles" class="font-sans text-sm uppercase tracking-wider text-text-secondary hover:text-text-primary transition-colors">Blog</a>
+      </div>
+
+      <!-- Center logo -->
+      <a href="/" class="font-display text-3xl md:text-4xl tracking-widest uppercase text-green drop-shadow-[0_0_12px_rgba(34,197,94,0.4)]"><%= siteName %></a>
+
+      <!-- Right nav links (desktop) -->
+      <div class="hidden md:flex items-center space-x-6">
+        <!-- Visitor -->
+        <div id="nav-visitor" class="flex items-center space-x-4">
+          <a href="/login" class="font-sans text-sm uppercase tracking-wider text-text-secondary hover:text-text-primary transition-colors">Connexion</a>
+          <a href="/register" class="bg-gold hover:bg-gold-hover text-bg-primary font-sans text-sm font-semibold uppercase tracking-wider px-5 py-2 rounded transition-colors">Inscription</a>
+        </div>
+
+        <!-- Client (hidden by default) -->
+        <div id="nav-client" class="hidden flex items-center space-x-4">
+          <a href="/cart" class="text-text-secondary hover:text-green transition-colors" title="Panier">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+          </a>
+          <a href="/orders" class="font-sans text-sm uppercase tracking-wider text-text-secondary hover:text-text-primary transition-colors">Commandes</a>
+          <button id="btn-logout" class="font-sans text-sm uppercase tracking-wider text-text-secondary hover:text-danger transition-colors cursor-pointer">Deconnexion</button>
+        </div>
+
+        <!-- Admin (hidden by default) -->
+        <div id="nav-admin" class="hidden">
+          <a href="/admin" class="font-sans text-sm uppercase tracking-wider text-gold hover:text-gold-hover transition-colors">Admin</a>
+        </div>
+      </div>
+
+      <!-- Mobile hamburger -->
+      <button id="btn-mobile-menu" class="md:hidden text-text-secondary hover:text-text-primary">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path id="icon-menu" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          <path id="icon-close" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="hidden md:hidden bg-bg-secondary border-t border-white/5 px-6 pb-6 space-y-1">
+    <a href="/" class="block font-sans text-sm uppercase tracking-wider text-text-secondary hover:text-text-primary py-3">Accueil</a>
+    <a href="/products" class="block font-sans text-sm uppercase tracking-wider text-text-secondary hover:text-text-primary py-3">Produits</a>
+    <a href="/articles" class="block font-sans text-sm uppercase tracking-wider text-text-secondary hover:text-text-primary py-3">Blog</a>
+
+    <div class="border-t border-white/5 my-2"></div>
+
+    <div id="nav-visitor-mobile" class="space-y-1">
+      <a href="/login" class="block font-sans text-sm uppercase tracking-wider text-text-secondary hover:text-text-primary py-3">Connexion</a>
+      <a href="/register" class="block bg-gold hover:bg-gold-hover text-bg-primary font-sans text-sm font-semibold uppercase tracking-wider px-5 py-3 rounded text-center mt-2">Inscription</a>
+    </div>
+
+    <div id="nav-client-mobile" class="hidden space-y-1">
+      <a href="/cart" class="block font-sans text-sm uppercase tracking-wider text-text-secondary hover:text-text-primary py-3">Panier</a>
+      <a href="/orders" class="block font-sans text-sm uppercase tracking-wider text-text-secondary hover:text-text-primary py-3">Commandes</a>
+      <button id="btn-logout-mobile" class="block font-sans text-sm uppercase tracking-wider text-text-secondary hover:text-danger py-3 cursor-pointer">Deconnexion</button>
+    </div>
+
+    <div id="nav-admin-mobile" class="hidden">
+      <a href="/admin" class="block font-sans text-sm uppercase tracking-wider text-gold hover:text-gold-hover py-3">Admin</a>
+    </div>
+  </div>
+</nav>

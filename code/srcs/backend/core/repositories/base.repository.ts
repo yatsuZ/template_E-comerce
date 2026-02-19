@@ -118,7 +118,7 @@ export abstract class BaseRepository<T, TCreate extends object, TUpdate extends 
         totalPages: Math.ceil(total / options.limit),
       });
     } catch (err) {
-      return failure('DATABASE', `Error fetching ${this.tableName} by ${col}`, err);
+      return failure('DATABASE', `Error fetching ${this.tableName} by ${String(column)}`, err);
     }
   }
 

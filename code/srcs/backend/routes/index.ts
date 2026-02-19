@@ -9,6 +9,8 @@ import { orderRoutes } from './api/orders.js';
 import { statsRoutes } from './api/stats.js';
 import { articleRoutes } from './api/articles.js';
 
+const SITE_NAME = process.env.SITE_NAME || 'SUSPENDED';
+
 export async function setupRoutes(fastify: FastifyInstance) {
 	// Routes API
 	await fastify.register(healthRoutes, { prefix: '/api' });
@@ -23,7 +25,13 @@ export async function setupRoutes(fastify: FastifyInstance) {
 
 	// Route principale
 	fastify.get('/', async (request, reply) => {
-		return reply.view('index.ejs');
+		return reply.view('layout.ejs', {
+			title: 'Accueil',
+			page: 'home',
+			siteName: SITE_NAME,
+			// Hero background: set heroImage or heroVideo to enable (ex: '/static/utils/hero.jpg')
+			// Falls back to gradient if both are undefined
+		});
 	});
 
 	// 404 handler
@@ -31,6 +39,6 @@ export async function setupRoutes(fastify: FastifyInstance) {
 		if (request.url.startsWith('/api/')) {
 			return reply.code(404).send({ success: false, error: 'API endpoint not found' });
 		}
-		return reply.view('index.ejs');
+		return reply.view('layout.ejs', { title: 'Page non trouvee', page: 'home', siteName: SITE_NAME });
 	});
 }

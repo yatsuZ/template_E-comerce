@@ -1,0 +1,89 @@
+@import "tailwindcss";
+@source "../../static/views/**/*.ejs";
+@source "../../static/js/**/*.ts";
+
+/* ── Fonts ── */
+@font-face {
+  font-family: 'Midgame';
+  src: url('/static/utils/Fonts/midgame/Midgame Std.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Tomorrow';
+  src: url('/static/utils/Fonts/Tomorrow/Tomorrow-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Tomorrow';
+  src: url('/static/utils/Fonts/Tomorrow/Tomorrow-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Tomorrow';
+  src: url('/static/utils/Fonts/Tomorrow/Tomorrow-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Tomorrow';
+  src: url('/static/utils/Fonts/Tomorrow/Tomorrow-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* ── Theme 60/30/10 : Noir / Vert / Gold ── */
+@theme {
+  /* 60% — Noir */
+  --color-bg-primary: #0A0A0A;
+  --color-bg-secondary: #111111;
+  --color-bg-card: #1A1A1A;
+  --color-bg-elevated: #353935;
+
+  /* 30% — Vert */
+  --color-green: #22C55E;
+  --color-green-hover: #16A34A;
+  --color-green-light: #4ADE80;
+
+  /* 10% — Gold */
+  --color-gold: #FFC802;
+  --color-gold-hover: #E6B400;
+
+  /* Texte */
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #9CA3AF;
+  --color-text-muted: #6B7280;
+
+  /* Statuts */
+  --color-danger: #EF4444;
+  --color-success: #22C55E;
+  --color-warning: #FFC802;
+
+  /* Fonts */
+  --font-display: 'Midgame', sans-serif;
+  --font-body: 'Tomorrow', sans-serif;
+  --font-sans: Inter, system-ui, -apple-system, sans-serif;
+}
+
+/* ── Base ── */
+body {
+  font-family: var(--font-sans);
+}
+
+/* Scrollbar minimale */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-bg-elevated);
+  border-radius: 3px;
+}

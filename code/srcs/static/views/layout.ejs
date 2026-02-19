@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <%- include('partials/head') %>
+</head>
+<body class="bg-bg-primary text-text-primary min-h-screen flex flex-col">
+  <%- include('partials/navbar') %>
+
+  <main class="flex-1">
+    <%- include('pages/' + page) %>
+  </main>
+
+  <%- include('partials/footer') %>
+
+  <script type="module" src="/static/js/main.js"></script>
+</body>
+</html>
